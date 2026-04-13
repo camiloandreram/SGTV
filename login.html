@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SGTV - Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="topbar" aria-label="Barra superior">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">SG</div>
+        <div>
+          <h1 style="font-size:16px;margin:0">SGTV - Gestión de Tiempos</h1>
+          <div class="small muted">Plataforma de reportes y vacaciones</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="card login-wrap" role="region" aria-labelledby="loginTitle">
+        <h2 id="loginTitle" class="login-title">Nómina y Gestión Humana</h2>
+        <p class="subtitle">Bienvenido. Ingresa con tu usuario para acceder al sistema.</p>
+
+        <form id="loginForm" class="login-form">
+          <div>
+            <label for="email">Correo electrónico</label>
+            <input id="email" type="email" required aria-required="true" placeholder="ejemplo@empresa.com" />
+          </div>
+          <div>
+            <label for="password">Contraseña</label>
+            <input id="password" type="password" required placeholder="••••••••" />
+          </div>
+          <button class="btn-primary" id="btnLogin">Ingresar</button>
+          <a class="link-muted" href="#" onclick="alert('Recuperación de credenciales (prototipo)')">¿Olvidaste tu contraseña o usuario?</a>
+        </form>
+      </section>
+    </main>
+
+    <div id="modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal" role="document">
+        <h3 id="modalTitle">Aviso</h3>
+        <p id="modalMsg">Mensaje</p>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn-close" onclick="closeModal()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

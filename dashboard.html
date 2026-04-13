@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SGTV - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="topbar" aria-label="Barra superior">
+      <div class="brand">
+        <a href="dashboard.html" style="text-decoration:none;color:inherit;display:flex;gap:12px;align-items:center">
+          <div class="logo" aria-hidden="true">SG</div>
+          <div>
+            <h1 style="font-size:16px;margin:0">SGTV - Gestión de Tiempos</h1>
+            <div class="small muted">Plataforma de reportes y vacaciones</div>
+          </div>
+        </a>
+      </div>
+      <div class="top-actions" role="navigation">
+        <input class="search" type="search" aria-label="Buscar" placeholder="Buscar...">
+        <a class="btn" href="#" onclick="logout(); return false;" title="Cerrar sesión">Cerrar sesión</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="dashTitle">
+        <h2 id="dashTitle" class="muted">Panel Principal</h2>
+        <div class="dashboard-grid">
+          <aside>
+            <div class="profile-card" aria-label="Tarjeta de usuario">
+              <div style="display:flex;gap:12px;align-items:center">
+                <div class="profile-badge" aria-hidden="true">C</div>
+                <div>
+                  <h2 id="profileName">Camilo Andres Ramirez</h2>
+                  <div class="small">Semillero</div>
+                </div>
+              </div>
+             <!--  <div style="margin-top:8px">
+                <a class="btn" href="time_reporting.html" aria-label="Ir a reporte de horas" style="background:white;color:var(--primary);border-radius:10px;padding:8px 12px;border:1px solid #f0f0f0;display:inline-block">Ir a Reporte de Horas</a>
+              </div> -->
+            </div>
+          </aside>
+
+          <section>
+            <div class="tiles" role="list" aria-label="Accesos rápidos">
+              <a class="tile" role="listitem" href="time_reporting.html">
+                <h3>Reporte de Horas</h3>
+                <p class="small muted">Historial y recibos</p>
+              </a>
+
+              <a class="tile" role="listitem" href="vacations.html">
+                <h3>Vacaciones</h3>
+                <p class="small muted"><strong style="color:var(--primary)">27.88 Días</strong></p>
+              </a>
+
+              <a class="tile" role="listitem" href="#" onclick="alert('Generar certificado (prototipo)'); return false">
+                <h3>Certificado Laboral</h3>
+                <p class="small muted">Generar y descargar</p>
+              </a>
+
+              <a class="tile" role="listitem" href="#">
+                <h3>Afiliaciones</h3>
+                <p class="small muted">EPS / Pensión</p>
+              </a>
+
+             <!--  <a class="tile" role="listitem" href="#">
+                <h3>Reportes</h3>
+                <p class="small muted">Exportar a PDF/Excel</p>
+              </a>
+
+              <a class="tile" role="listitem" href="#">
+                <h3>Solicitudes</h3>
+                <p class="small muted">Pendientes 0 · Aprobadas 3</p>
+              </a>
+            </div> -->
+
+            <!-- <div style="margin-top:14px;padding:12px;background:#f4f9ff;border-radius:8px;border:1px solid #e9f3ff;color:#046;display:flex;align-items:center;gap:10px">
+              <strong>Utilice el menú o las tarjetas para navegar por la aplicación.</strong>
+            </div> -->
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal" role="document">
+      <h3 id="modalTitle">Aviso</h3>
+      <p id="modalMsg">Mensaje</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn-close" onclick="closeModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

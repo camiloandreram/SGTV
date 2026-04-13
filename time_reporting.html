@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SGTV - Time Reporting</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="topbar" aria-label="Barra superior">
+      <div class="brand">
+        <a href="dashboard.html" style="text-decoration:none;color:inherit;display:flex;gap:12px;align-items:center">
+          <div class="logo" aria-hidden="true">SG</div>
+          <div>
+            <h1 style="font-size:16px;margin:0">SGTV - Reporte de horas</h1>
+            <div class="small muted">Registro semanal de horas</div>
+          </div>
+        </a>
+      </div>
+      <div class="top-actions" role="navigation">
+        <input class="search" type="search" aria-label="Buscar" placeholder="Buscar...">
+        <a class="btn" href="dashboard.html">Volver</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="timeTitle">
+        <div class="time-panel">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <h2 id="timeTitle">Reporte de horas</h2>
+              <div class="small muted">Empleado: <strong id="employeeName">Camilo Andres Ramirez</strong></div>
+            </div>
+            <div class="flex gap">
+              <div class="chip">Mes:
+                <select id="month" class="select" aria-label="Mes">
+                  <option>OCTUBRE</option>
+                  <option>NOVIEMBRE</option>
+                </select>
+              </div>
+              <div class="badge-total" id="weekTotal">Total: 0</div>
+            </div>
+          </div>
+
+          <div class="time-controls" style="margin-top:8px">
+            <label class="small muted"><input id="onlyBillable" type="checkbox"> Mostrar solo facturable</label>
+            <div style="flex:1"></div>
+            <button class="btn" onclick="fillSample()">Rellenar ejemplo</button>
+            <button class="btn" onclick="clearTable()">Limpiar</button>
+          </div>
+
+          <div style="overflow:auto;margin-top:8px">
+            <table class="calendar-table">
+              <thead>
+                <tr>
+                  <th>Proyectos</th>
+                  <th>MI</th><th>JU</th><th>VI</th><th>SÁ</th><th>DO</th><th>LU</th><th>MA</th>
+                  <th>TOTAL</th>
+                </tr>
+              </thead>
+              <tbody id="timeBody">
+                <!-- Se llena dinámicamente -->
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th>Total por día</th>
+                  <td id="totMI">0</td>
+                  <td id="totJU">0</td>
+                  <td id="totVI">0</td>
+                  <td id="totSA">0</td>
+                  <td id="totDO">0</td>
+                  <td id="totLU">0</td>
+                  <td id="totMA">0</td>
+                  <td id="grandTotal">0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+            <a class="btn" href="dashboard.html">Cancelar</a>
+            <button class="btn-primary" onclick="submitReport()">Enviar</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal" role="document">
+      <h3 id="modalTitle">Aviso</h3>
+      <p id="modalMsg">Mensaje</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn-close" onclick="closeModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/time-reporting.js"></script>
+</body>
+</html>

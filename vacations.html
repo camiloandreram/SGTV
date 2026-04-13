@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SGTV - Vacaciones</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="topbar" aria-label="Barra superior">
+      <div class="brand">
+        <a href="dashboard.html" style="text-decoration:none;color:inherit;display:flex;gap:12px;align-items:center">
+          <div class="logo" aria-hidden="true">SG</div>
+          <div>
+            <h1 style="font-size:16px;margin:0">SGTV - Vacaciones</h1>
+            <div class="small muted">Solicitar y ver días</div>
+          </div>
+        </a>
+      </div>
+      <div class="top-actions" role="navigation">
+        <input class="search" type="search" aria-label="Buscar" placeholder="Buscar...">
+        <a class="btn" href="dashboard.html">Volver</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="vacTitle">
+        <h2 id="vacTitle">Solicitar Vacaciones</h2>
+        <form onsubmit="return false" class="form-grid" style="margin-top:12px">
+          <div>
+            <label for="startDate">Fecha inicio</label>
+            <input id="startDate" type="date" class="select" aria-required="true">
+          </div>
+          <div>
+            <label for="endDate">Fecha fin</label>
+            <input id="endDate" type="date" class="select" aria-required="true">
+          </div>
+          <div style="grid-column:1/-1;display:flex;gap:10px;align-items:center;margin-top:8px">
+            <button class="btn-primary" onclick="submitVacation()">Enviar solicitud</button>
+            <a class="btn" href="dashboard.html">Cancelar</a>
+            <div class="muted small">Días disponibles: <strong id="vacDays">27.88</strong></div>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal" role="document">
+      <h3 id="modalTitle">Aviso</h3>
+      <p id="modalMsg">Mensaje</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn-close" onclick="closeModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/vacations.js"></script>
+</body>
+</html>
