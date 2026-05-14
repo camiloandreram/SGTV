@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGTV - Dashboard de Gestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="animate-fade-in">
+
+    <div class="dashboard-container">
+        <header class="topbar">
+            <div class="brand">
+                <a href="dashboard.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 12px;">
+                    <div class="logo">SG</div>
+                    <div>
+                        <h1 style="font-size: 18px; margin: 0; font-weight: 700;">SGTV</h1>
+                        <div style="font-size: 12px; color: var(--text-muted);">Gestión de Tiempos y Nómina</div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="top-actions">
+                <a href="#" class="btn-logout-modern" onclick="logout(); return false;">
+                    <i class="fa-solid fa-power-off"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+
+        <aside class="profile-sidebar">
+            <div class="profile-card">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 15px;">
+                    <!-- La letra de la insignia se actualizará con JS -->
+                    <div class="profile-badge" id="profileBadge">C</div>
+                    <div>
+                        <h2 id="profileName" style="margin-bottom: 5px; font-size: 20px; font-weight: 700;"></h2>
+                        <div id="profileCargo" style="color: var(--primary); font-weight: 600; font-size: 14px;"></div>
+                        <div id="profileSede" class="small text-muted"></div>
+                    </div>
+                </div>
+
+                <hr style="margin: 25px 0; border: 0; border-top: 1px solid var(--border-color);">
+
+                <div class="user-stats">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span class="small text-muted">Estado:</span>
+                        <span id="profileEstado" class="small" style="color: #27ae60; font-weight: 700;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <span class="small text-muted">Proyectos:</span>
+                        <span id="profileProjects" class="small" style="font-weight: 500; text-align: right; line-height: 1.4;"></span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+            <section>
+                <h2 class="section-title">Accesos Rápidos</h2>
+
+                <div class="tiles">
+                    <a class="tile" href="time_reporting.html">
+                        <i class="fa-regular fa-clock"></i>
+                        <h3>Reporte de Horas</h3>
+                        <p class="muted">Registra tu jornada diaria y revisa tu historial.</p>
+                    </a>
+
+                    <a class="tile" href="vacations.html">
+                        <i class="fa-solid fa-umbrella-beach"></i>
+                        <h3>Vacaciones</h3>
+                        <p class="muted">Vacaciones disponible: <strong id="vacationDaysDisplay" style="color: var(--primary);"></strong></p>
+                    </a>
+
+                    <a class="tile" href="#">
+                        <i class="fa-solid fa-file-contract"></i>
+                        <h3>Certificado Laboral</h3>
+                        <p class="muted">Descarga tu carta laboral en formato PDF.</p>
+                    </a>
+
+                    <a class="tile" href="#">
+                        <i class="fa-solid fa-handshake-angle"></i>
+                        <h3>Afiliaciones</h3>
+                        <p class="muted">Consulta tu estado actual en EPS y Pensión.</p>
+                    </a>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

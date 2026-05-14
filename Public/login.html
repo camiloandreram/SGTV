@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGTV - Iniciar Sesión</title>
+
+    <!-- Librerías Externas -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="login-body">
+
+    <div class="container-fluid h-100 p-0">
+        <div class="row h-100 g-0">
+
+            <!-- Panel Izquierdo: Ilustración (Se configura en el CSS) -->
+            <div class="col-lg-7 d-none d-lg-block left-panel">
+                <!-- La imagen se visualiza aquí a través de la clase .left-panel en login.css -->
+            </div>
+
+            <!-- Panel Derecho: Formulario de Acceso -->
+            <div class="col-lg-5 col-12 d-flex align-items-center justify-content-center bg-white p-4">
+
+                <main class="login-glass-card shadow-sm animate-fade-in">
+                    <div class="card-body p-4 p-md-5">
+
+                        <!-- Cabecera del Formulario -->
+                        <div class="text-center mb-5">
+                            <div class="login-logo-circle">SG</div>
+                            <h1 class="h4 fw-bold text-dark m-0">SGTV</h1>
+                            <div class="title-underline mx-auto"></div>
+                        </div>
+
+                        <div class="text-center mb-4">
+                            <h2 class="h5 fw-bold mb-1">Nómina y Gestión Humana</h2>
+                            <p class="text-muted small">Bienvenido. Ingresa al sistema.</p>
+                        </div>
+
+                        <!-- Formulario -->
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted">Correo Electrónico</label>
+                                <div class="input-group-custom">
+                                    <span class="input-icon"><i class="fa-regular fa-user"></i></span>
+                                    <input id="email" type="email" class="form-control-custom" placeholder="ejemplo@vass.com" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold text-muted">Contraseña</label>
+                                <div class="input-group-custom">
+                                    <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+                                    <input id="password" type="password" class="form-control-custom" placeholder="••••••••" required>
+                                    <span class="input-icon-end" id="togglePassword">
+                                        <i class="fa-regular fa-eye-slash" id="eyeIcon" style="cursor: pointer;"></i>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary-custom w-100 py-3" id="btnLogin">
+                                Ingresar al Sistema
+                            </button>
+
+                            <div class="text-center mt-4">
+                                <a href="#" class="forgot-link">¿Olvidaste tu contraseña o usuario?</a>
+                            </div>
+                        </form>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/common.js"></script>
+    <script src="js/login.js"></script>
+</body>
+</html>
