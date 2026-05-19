@@ -30,39 +30,49 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Lógica de autenticación
-  loginForm.addEventListener('submit', function(event) {
-    event.preventDefault();
+  // Lógica de autenticación REAL conectada a la base de datos
+  loginForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
 
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('password').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const pass = document.getElementById('password').value.trim();
 
-    // 1. Validación de campos vacíos
-    if (!email || !pass) {
-      mostrarMensaje('Campos incompletos', 'Por favor ingrese usuario y contraseña.', 'warning');
-      return;
-    }
+      // 1. Validación de campos vacíos
+      if (!email || !pass) {
+          mostrarMensaje('Campos incompletos', 'Por favor ingrese usuario y contraseña.', 'warning');
+          return;
+      }
 
-    // 2. Buscar usuario en SGTV_DB (definida en common.js)
-    // Usamos toLowerCase() para que no importe si escriben en mayúsculas
-    const usuarioEncontrado = SGTV_DB.usuarios.find(u =>
-        u.correo.toLowerCase() === email.toLowerCase() &&
-        u.password === pass
-    );
+      try {
+          // 2. Petición al servidor de Node.js
+          const response = await fetch('http://localhost:3000/api/login', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ email: email, password: pass })
+          });
 
-    // 3. Validación de credenciales
-    if (usuarioEncontrado) {
-        // ÉXITO: Guardamos TODO el objeto del usuario en la sesión
-        // Esto incluye 'nombre', 'fecha_inicio_contrato', etc.
-        setUser(usuarioEncontrado);
+          const data = await response.json();
 
-        console.log('Login exitoso para:', usuarioEncontrado.nombre);
+          // 3. Validación de la respuesta del servidor
+          if (data.success) {
+              // ÉXITO: Guardamos el usuario que vino de MySQL en la sesión
+              // Nota: data.user contiene lo que devolvió el SELECT de la DB
+              setUser(data.user);
 
-        // Redirigir al dashboard
-        window.location.href = 'dashboard.html';
-    } else {
-        // ERROR: Credenciales incorrectas
-        mostrarMensaje('Error de acceso', 'Usuario o contraseña incorrectos.', 'error');
-    }
+              console.log('Login exitoso para:', data.user.Nombre);
+
+              // Redirigir al dashboard
+              window.location.href = 'dashboard.html';
+          } else {
+              // ERROR: Credenciales incorrectas (lo que configuramos en index.js)
+              mostrarMensaje('Error de acceso', data.message, 'error');
+          }
+      } catch (error) {
+          console.error('Error de conexión:', error);
+          mostrarMensaje('Error técnico', 'No se pudo conectar con el servidor. ¿Olvidaste iniciar node index.js?', 'error');
+      }
   });
 
   /**

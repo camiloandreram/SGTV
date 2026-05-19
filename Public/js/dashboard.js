@@ -11,26 +11,27 @@ function setupUserProfile() {
     const profileCargo = document.getElementById('profileCargo');
     const profileSede = document.getElementById('profileSede');
     const profileBadge = document.getElementById('profileBadge');
-    const profileEstado = document.getElementById('profileEstado');
-    const profileProjects = document.getElementById('profileProjects');
 
     if (user) {
-        if (profileName) profileName.textContent = user.nombre || 'Sin nombre';
-        if (profileCargo) profileCargo.textContent = user.cargo || 'Sin cargo';
-        if (profileSede) profileSede.textContent = user.sede || 'Sin sede';
+        // Mostramos Nombre y Apellido
+        if (profileName) profileName.textContent = `${user.Nombre} ${user.Apellido}`;
+
+        // ¡Aquí está el truco! Usamos los nuevos nombres del JOIN
+        if (profileCargo) profileCargo.textContent = user.nombre_perfil || 'Sin cargo';
+        if (profileSede) profileSede.textContent = user.nombre_depto || 'Sin sede';
+
         if (profileBadge) {
-            const inicial = user.nombre ? user.nombre.trim().charAt(0).toUpperCase() : '?';
+            const inicial = user.Nombre ? user.Nombre.trim().charAt(0).toUpperCase() : '?';
             profileBadge.textContent = inicial;
         }
-        if (profileEstado) profileEstado.textContent = user.estado || 'N/D';
 
-        // Proyectos desde la lista global, no desde el usuario
-        if (profileProjects) {
-            const nombres = getAllProjectNames(); // tomados directamente de SGTV_DB.proyectos
-            profileProjects.textContent = nombres.join(', ') || 'Ninguno';
+        // Estado y Vacaciones (usando los nombres de tu DB)
+        if (document.getElementById('profileEstado')) {
+            document.getElementById('profileEstado').textContent = user.Estado;
         }
-    } else {
-        if (profileName) profileName.textContent = 'No autenticado';
+        if (document.getElementById('vacationDaysDisplay')) {
+            document.getElementById('vacationDaysDisplay').textContent = `${user.vacaciones_disponibles} Días`;
+        }
     }
 }
 
