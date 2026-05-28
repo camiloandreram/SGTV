@@ -93,6 +93,20 @@
             <button class="btn-primary-custom" onclick="closeModal()">Entendido</button>
         </div>
     </div>
+   <!-- Historial de solicitudes -->
+    <section class="profile-card" style="margin-top: 30px; padding: 30px;">
+        <h3 style="margin-bottom: 20px;"><i class="fa-regular fa-clock"></i> Mis solicitudes</h3>
+        <div style="overflow-x: auto;">
+            <table class="reporting-table">
+                <thead>
+                    <tr><th>Proyecto</th><th>Fecha Inicio</th><th>Fecha Fin</th><th>Días</th><th>Estado</th></tr>
+                </thead>
+                <tbody id="solicitudesContainer">
+                    <!-- Aquí se cargarán dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+    </section>
 
     <script src="js/common.js"></script>
     <script src="js/vacations.js"></script>

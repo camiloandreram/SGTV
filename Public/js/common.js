@@ -1,5 +1,3 @@
-console.log('✅ common.js cargado correctamente');
-
 function openModal(msg) {
   console.log('openModal llamado con:', msg);
   alert('AVISO: ' + msg);
@@ -76,4 +74,19 @@ function getVacationBalance() {
     const diasConsumidos = parseFloat(localStorage.getItem('vacationDaysConsumed') || '0');
 
     return Math.floor(Math.max(0, diasGanados - diasConsumidos));
+}
+async function refreshUserSession() {
+    const oldUser = getUser();
+    if (!oldUser || !oldUser.idUsuario) return null;
+    try {
+        const response = await fetch(`/api/usuario/${oldUser.idUsuario}`);
+        const data = await response.json();
+        if (data.success) {
+            setUser(data.user);
+            return data.user;
+        }
+    } catch (error) {
+        console.error('Error refrescando usuario:', error);
+    }
+    return null;
 }

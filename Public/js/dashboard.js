@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
     setupUserProfile();
-    setupVacationDays();
     animateDashboardTiles();
 });
 
@@ -11,12 +10,10 @@ function setupUserProfile() {
     const profileCargo = document.getElementById('profileCargo');
     const profileSede = document.getElementById('profileSede');
     const profileBadge = document.getElementById('profileBadge');
+    const profileProjects = document.getElementById('profileProjects');
 
     if (user) {
-        // Mostramos Nombre y Apellido
         if (profileName) profileName.textContent = `${user.Nombre} ${user.Apellido}`;
-
-        // ¡Aquí está el truco! Usamos los nuevos nombres del JOIN
         if (profileCargo) profileCargo.textContent = user.nombre_perfil || 'Sin cargo';
         if (profileSede) profileSede.textContent = user.nombre_depto || 'Sin sede';
 
@@ -25,21 +22,18 @@ function setupUserProfile() {
             profileBadge.textContent = inicial;
         }
 
-        // Estado y Vacaciones (usando los nombres de tu DB)
+        // Mostrar el proyecto activo del usuario (tabla usuario_proyecto)
+        if (profileProjects) {
+            profileProjects.textContent = user.nombre_proyecto || 'Sin proyecto activo';
+        }
+
         if (document.getElementById('profileEstado')) {
             document.getElementById('profileEstado').textContent = user.Estado;
         }
         if (document.getElementById('vacationDaysDisplay')) {
-            document.getElementById('vacationDaysDisplay').textContent = `${user.vacaciones_disponibles} Días`;
+            const diasEnteros = Math.floor(user.vacaciones_disponibles || 0);
+            document.getElementById('vacationDaysDisplay').textContent = `${diasEnteros} Días`;
         }
-    }
-}
-
-function setupVacationDays() {
-    const vacationDisplay = document.getElementById('vacationDaysDisplay');
-    if (vacationDisplay) {
-        const saldo = getVacationBalance(); // calculado al instante
-        vacationDisplay.textContent = `${saldo} Días`;
     }
 }
 
@@ -51,7 +45,7 @@ function animateDashboardTiles() {
         tile.style.transition = "all 0.5s ease";
         setTimeout(() => {
             tile.style.opacity = "1";
-            tile.style.transform = "translateY(0)";
+            tile.style.transform = "translateY(0)\";";
         }, 100 * (index + 1));
     });
 }
@@ -61,7 +55,7 @@ function logout() {
         clearSession();
     } else {
         sessionStorage.clear();
+        localStorage.clear();
     }
-
     window.location.href = 'login.html';
 }
