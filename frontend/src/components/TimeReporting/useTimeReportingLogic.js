@@ -1,24 +1,69 @@
+/**
+ * ------------------------------------------------------------------------------------------------
+ * @Name         useTimeReportingLogic
+ * @Author       Camilo Andres Ramirez Ospina
+ * @Date         2026-06-17
+ * @Group        Time Reporting Module
+ * @Description  Custom React hook para la gestión de reporte de horas semanal: navegación,
+ *               carga/guardado de horas, manejo de festivos y cálculo de métricas mensuales.
+ * @Changes      (most recent first)
+ * 2026-06-17    Camilo Andres Ramirez Ospina    Versión inicial
+ * ------------------------------------------------------------------------------------------------
+**/
+
 import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../../services/api';
 
+/**
+ * Hook principal para la lógica de reporte de tiempos.
+ * description: Gestiona navegación semanal, horas por proyecto, festivos, acumulados y envío.
+ * param: {Object} user - Objeto usuario con idUsuario, idProyecto, etc.
+ * return: {Object} - Variables de estado y funciones para el componente.
+ * author: Camilo Andres Ramirez Ospina
+ * date: 2026-06-17
+**/
 export const useTimeReportingLogic = (user) => {
+
+  // Fecha de referencia para calcular la semana actual (lunes a domingo)
   const [currentReferenceDate, setCurrentReferenceDate] = useState(new Date());
+
+  // Texto que muestra el rango de la semana en formato ISO (YYYY-MM-DD - YYYY-MM-DD)
   const [weekRangeText, setWeekRangeText] = useState('');
+
+  // Arreglo de objetos que representan cada día de la semana (etiqueta, fecha de visualización e ISO)
   const [weekHeaders, setWeekHeaders] = useState([]);
+
+  // Lista de proyectos con sus arreglos de horas diarias
   const [projects, setProjects] = useState([]);
+
+  // Mensaje de retroalimentación (texto y tipo)
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  // Estados dinámicos controlados por la data del Backend
+  // Meta de horas semanales (se ajusta dinámicamente según festivos)
   const [metaHoras, setMetaHoras] = useState(40);
+
+  // Total de horas trabajadas en el mes (acumulado de todas las semanas)
   const [totalMesTrabajado, setTotalMesTrabajado] = useState(0);
+
+  // Mínimo de horas mensuales exigido por el proyecto o empresa
   const [minimoMesExigido, setMinimoMesExigido] = useState(0);
+
+  // Indica si la semana mostrada pertenece a un mes futuro (se deshabilitan ediciones)
   const [esMesFuturo, setEsMesFuturo] = useState(false);
 
-  // Guardará el array de 7 booleanos que dictamina el Backend [false, false, ..., true, false]
+  // Arreglo de 7 booleanos que indican si cada día es festivo (proporcionado por el Backend)
   const [festivosSemana, setFestivosSemana] = useState([false, false, false, false, false, false, false]);
 
+  // Etiquetas cortas para los días de la semana (lunes a domingo)
   const weekDaysLabels = ['LU', 'MA', 'MI', 'JU', 'VI', 'SÁ', 'DO'];
 
+  /**
+   * description: Convierte un objeto Date a cadena ISO (YYYY-MM-DD).
+   * param: {Date} date - La fecha a convertir.
+   * return: {string} - Cadena ISO.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   const obtenerFormatoISO = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -26,7 +71,13 @@ export const useTimeReportingLogic = (user) => {
     return `${year}-${month}-${day}`;
   };
 
-  // 1. Reconstrucción puramente visual y cronológica del esqueleto de la semana
+  /**
+   * description: Reconstruye el esqueleto visual y cronológico de la semana a partir de una fecha base.
+   *              Calcula el lunes, los encabezados de días y la bandera de mes futuro.
+   * param: {Date} baseDate - Fecha de referencia para anclar la semana.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   const updateWeekPeriod = useCallback((baseDate) => {
     const d = new Date(baseDate);
     const dayOfWeek = d.getDay();
@@ -60,7 +111,12 @@ export const useTimeReportingLogic = (user) => {
     setWeekHeaders(headers);
   }, []);
 
-  // 2. Consumo de API: Sincroniza horas, acumulados mensuales Y banderas de festivos
+  /**
+   * description: Carga las horas semanales, acumulados mensuales y festivos desde el Backend.
+   *              Construye la lista de proyectos con el proyecto asignado y los datos de horas.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   const cargarHorasRegistradas = useCallback(async () => {
     if (!user?.idUsuario || weekHeaders.length === 0) return;
 
@@ -79,18 +135,15 @@ export const useTimeReportingLogic = (user) => {
         if (response.totalHorasMes !== undefined) setTotalMesTrabajado(response.totalHorasMes);
         if (response.minimoHorasMes !== undefined) setMinimoMesExigido(response.minimoHorasMes);
 
-        // Mapeamos los festivos que calculó el Backend de forma segura
         if (response.festivosSemana && response.festivosSemana.length === 7) {
           setFestivosSemana(response.festivosSemana);
 
-          // Calculamos la meta dinámicamente en base a los festivos laborales recibidos (posiciones 0 a 4 correspondientes a L-V)
           let diasFestivosLaborales = 0;
           for (let i = 0; i < 5; i++) {
             if (response.festivosSemana[i] === true) diasFestivosLaborales++;
           }
           setMetaHoras(40 - (diasFestivosLaborales * 8));
         } else {
-          // Fallback por defecto si la data de festivos no llega
           setFestivosSemana([false, false, false, false, false, false, false]);
           setMetaHoras(40);
         }
@@ -111,16 +164,33 @@ export const useTimeReportingLogic = (user) => {
     }
   }, [user, weekHeaders]);
 
+  /**
+   * description: Cuando cambia la fecha de referencia, se reconstruye la semana.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   useEffect(() => {
     updateWeekPeriod(currentReferenceDate);
   }, [currentReferenceDate, updateWeekPeriod]);
 
+  /**
+   * description: Cuando los encabezados de semana están listos, se cargan las horas.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   useEffect(() => {
     if (weekHeaders.length > 0) {
       cargarHorasRegistradas();
     }
   }, [weekHeaders, cargarHorasRegistradas]);
 
+  /**
+   * description: Navega una semana hacia adelante o hacia atrás.
+   *              Reinicia proyectos, festivos y limpia mensajes.
+   * param: {string} direction - 'prev' o 'next'.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   const handleNavigateWeek = (direction) => {
     const newDate = new Date(currentReferenceDate);
     if (direction === 'prev') {
@@ -130,10 +200,19 @@ export const useTimeReportingLogic = (user) => {
     }
     setCurrentReferenceDate(newDate);
     setProjects([]);
-    setFestivosSemana([false, false, false, false, false, false, false]); // Reseteo limpio de colores al transicionar
+    setFestivosSemana([false, false, false, false, false, false, false]);
     setMessage({ text: '', type: '' });
   };
 
+  /**
+   * description: Actualiza el valor de horas de un proyecto y día específico.
+   *              No permite editar si el mes es futuro o el día es festivo.
+   * param: {number} projectIndex - Índice del proyecto en el arreglo projects.
+   * param: {number} dayIndex - Índice del día (0=lunes, 6=domingo).
+   * param: {string|number} value - Nuevo valor de horas.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   const handleHourChange = (projectIndex, dayIndex, value) => {
     const esFestivo = festivosSemana[dayIndex];
     if (esMesFuturo || esFestivo) return;
@@ -147,10 +226,38 @@ export const useTimeReportingLogic = (user) => {
     setProjects(updatedProjects);
   };
 
+  /**
+   * description: Calcula el total de horas de un proyecto.
+   * param: {number[]} hours - Arreglo de horas diarias.
+   * return: {number} - Suma de las horas.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   const getProjectTotal = (hours) => hours.reduce((sum, h) => sum + h, 0);
+
+  /**
+   * description: Calcula el total de horas de un día específico (sumando todos los proyectos).
+   * param: {number} dayIndex - Índice del día.
+   * return: {number} - Total de horas para ese día.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   const getDayTotal = (dayIndex) => projects.reduce((sum, p) => sum + (p.hours[dayIndex] || 0), 0);
+
+  /**
+   * description: Calcula el gran total de horas de todos los proyectos y días.
+   * return: {number} - Gran total.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   const getGrandTotal = () => projects.reduce((sum, p) => sum + getProjectTotal(p.hours), 0);
 
+  /**
+   * description: Envía el reporte semanal al Backend.
+   *              Valida que no sea un mes futuro y luego envía cada registro diario.
+   * author: Camilo Andres Ramirez Ospina
+   * date: 2026-06-17
+   */
   const handleSubmitReport = async () => {
     if (esMesFuturo) {
       setMessage({ text: 'No está permitido almacenar horas en meses futuros.', type: 'danger' });
@@ -188,6 +295,11 @@ export const useTimeReportingLogic = (user) => {
     }
   };
 
+  /**
+   * description: Exposición de todas las variables y funciones para el componente.
+   * return: {Object} - Interfaz para el componente.
+   * date: 2026-06-17
+   */
   return {
     weekRangeText,
     weekHeaders,
@@ -197,7 +309,7 @@ export const useTimeReportingLogic = (user) => {
     totalMesTrabajado,
     minimoMesExigido,
     esMesFuturo,
-    festivosSemana, // <-- Exponemos el arreglo hacia la vista HTML
+    festivosSemana,
     handleNavigateWeek,
     handleHourChange,
     getProjectTotal,

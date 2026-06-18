@@ -2,6 +2,9 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Login from './components/Login/Login';
+import CreateUser from './components/Employees/CreateUser';
+import UserList from './components/Employees/UserList';
+import EditUser from './components/Employees/EditUser';
 import Dashboard from './components/Dashboard/Dashboard';
 import Vacations from './components/Vacations/Vacations';
 import TimeReporting from './components/TimeReporting/TimeReporting';
@@ -17,6 +20,9 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/vacaciones" element={<Vacations />} />
             <Route path="/reporte-horas" element={<TimeReporting />} />
+            <Route path="/empleados" element={<UserList />} />
+            <Route path="/empleados/nuevo" element={<CreateUser />} />
+            <Route path="/empleados/editar/:id" element={<EditUser />} />
           </Route>
         </Routes>
       </BrowserRouter>

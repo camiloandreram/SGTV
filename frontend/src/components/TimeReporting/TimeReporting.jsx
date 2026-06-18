@@ -1,8 +1,28 @@
+/**
+ * ------------------------------------------------------------------------------------------------
+ * @Name         TimeReporting.jsx
+ * @Author       Camilo Andres Ramirez Ospina
+ * @Date         2026-06-17
+ * @Group        Time Reporting Module
+ * @Description  Componente visual principal del módulo de reporte de tiempos. Muestra una matriz
+ *               semanal de horas por proyecto, con navegación entre semanas, indicadores de festivos,
+ *               progreso semanal y consolidado mensual.
+ * @Changes      (most recent first)
+ * 2026-06-17    Camilo Andres Ramirez Ospina    Versión inicial
+ * ------------------------------------------------------------------------------------------------
+**/
+
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { useTimeReportingLogic } from './useTimeReportingLogic';
 
+/**
+ * description: Componente principal del módulo de reporte de tiempos.
+ * author: Camilo Andres Ramirez Ospina | 2026-06-17
+ * param: Ninguno (usa useContext para obtener user)
+ * return: JSX con la matriz de horas semanal, navegación y métricas.
+ */
 const TimeReporting = () => {
   const { user } = useContext(AuthContext);
 
@@ -28,7 +48,12 @@ const TimeReporting = () => {
     <div className="min-h-screen bg-slate-50 font-poppins text-text-main p-6">
       <div className="max-w-7xl mx-auto bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
 
-        {/* Cabecera Principal */}
+        {/* ============================================================
+            CABECERA PRINCIPAL
+            ============================================================
+            description: Muestra el nombre del usuario, el grupo de personal y un enlace
+                         para volver al dashboard. */}
+
         <div className="mb-6 flex justify-between items-start">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
@@ -41,7 +66,13 @@ const TimeReporting = () => {
           </Link>
         </div>
 
-        {/* CONTADORES SUPERIORES */}
+        {/* ============================================================
+            CONTADORES SUPERIORES
+            ============================================================
+            description: Muestra dos tarjetas: una con la barra de progreso de la semana
+                         (comparando horas acumuladas vs meta) y otra con el consolidado
+                         de horas del mes vs el mínimo requerido. */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="border border-gray-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between">
             <div className="flex justify-between items-center mb-2">
@@ -71,7 +102,12 @@ const TimeReporting = () => {
           </div>
         </div>
 
-        {/* NAVEGADOR ENTRE SEMANAS */}
+        {/* ============================================================
+            NAVEGADOR ENTRE SEMANAS
+            ============================================================
+            description: Botones para navegar entre semanas (anterior/siguiente) con
+                         visualización del rango de fechas en formato ISO. */}
+
         <div className="flex justify-between items-center border-b border-gray-100 pb-4 mb-6">
           <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1.5 shadow-sm">
             <button onClick={() => handleNavigateWeek('prev')} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
@@ -86,12 +122,23 @@ const TimeReporting = () => {
           </div>
         </div>
 
+        {/* ============================================================
+            MENSAJE DE MES FUTURO
+            ============================================================
+            description: Alerta que se muestra cuando la semana seleccionada pertenece
+                         a un mes futuro, indicando que el registro está deshabilitado. */}
+
         {esMesFuturo && (
           <div className="p-4 rounded-xl text-sm mb-6 border font-medium bg-amber-50 text-amber-800 border-amber-200">
             <i className="mr-2 fa-solid fa-lock"></i>
             Esta semana pertenece a un mes futuro en el calendario. El registro de tiempos está deshabilitado.
           </div>
         )}
+
+        {/* ============================================================
+            MENSAJES DE RETROALIMENTACIÓN
+            ============================================================
+            description: Muestra mensajes de éxito o error después de guardar el reporte. */}
 
         {message.text && (
           <div className={`p-4 rounded-xl text-sm mb-6 border font-medium ${
@@ -102,7 +149,15 @@ const TimeReporting = () => {
           </div>
         )}
 
-        {/* TABLA MATRIZ */}
+        {/* ============================================================
+            TABLA MATRIZ DE HORAS
+            ============================================================
+            description: Tabla principal que muestra la matriz de horas por proyecto y día.
+                         - Encabezados: días de la semana con indicador de festivo.
+                         - Filas: cada proyecto con sus horas diarias (inputs editables).
+                         - Pie de tabla: totales diarios y gran total.
+                         Los inputs se deshabilitan en festivos, fines de semana o mes futuro. */}
+
         <div className="overflow-x-auto border border-gray-100 rounded-2xl">
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
@@ -135,6 +190,13 @@ const TimeReporting = () => {
                   </td>
                 </tr>
               ) : (
+                /* ==========================================================
+                   RENDERIZADO DE PROYECTOS Y HORAS
+                   ==========================================================
+                   description: Mapeo de cada proyecto para renderizar una fila con:
+                                - Nombre y descripción del proyecto.
+                                - Inputs de horas para cada día (deshabilitados según reglas).
+                                - Total de horas del proyecto al final de la fila. */
                 projects.map((proj, pIdx) => (
                   <tr key={proj.id} className="hover:bg-slate-50/50">
                     <td className="py-4 px-4">
@@ -153,6 +215,13 @@ const TimeReporting = () => {
                             esFestivo ? 'bg-emerald-50/40 border-x border-emerald-100/20' : ''
                           }`}
                         >
+                          {/* ----------------------------------------------------
+                              INPUT DE HORAS POR DÍA
+                              ----------------------------------------------------
+                              description: Input numérico para registrar las horas de un proyecto
+                                           en un día específico. Se deshabilita si el día es festivo,
+                                           fin de semana o si la semana pertenece a un mes futuro.
+                                           El estilo cambia según el estado (festivo, futuro, normal). */}
                           <input
                             type="number"
                             min="0"
@@ -182,6 +251,11 @@ const TimeReporting = () => {
                 ))
               )}
             </tbody>
+            {/* ============================================================
+                PIE DE TABLA - TOTALES DIARIOS Y GRAN TOTAL
+                ============================================================
+                description: Muestra el total de horas por día (sumando todos los proyectos)
+                             y el gran total de la semana. Los días festivos se resaltan. */}
             <tfoot>
               <tr className="bg-slate-50 font-bold text-xs border-t border-gray-100">
                 <td className="py-3 px-4 text-gray-500">TOTAL DIARIO</td>
@@ -203,7 +277,12 @@ const TimeReporting = () => {
           </table>
         </div>
 
-        {/* BOTÓN DE GUARDADO */}
+        {/* ============================================================
+            BOTÓN DE GUARDADO
+            ============================================================
+            description: Botón que envía el reporte de horas al servidor.
+                         Se deshabilita si no hay proyectos cargados o si la semana es futura. */}
+
         <div className="mt-6 flex justify-end">
           <button
             onClick={handleSubmitReport}

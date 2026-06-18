@@ -1,22 +1,51 @@
+/**
+ * ------------------------------------------------------------------------------------------------
+ * @Name         Vacations.jsx
+ * @Author       Camilo Andres Ramirez Ospina
+ * @Date         2026-06-17
+ * @Group        Vacations Module
+ * @Description  Componente visual principal del módulo de vacaciones. Muestra el formulario de solicitud,
+ *               el resumen de días disponibles, el historial del usuario y el panel de aprobaciones
+ *               para líderes de proyecto.
+ * @Changes      (most recent first)
+ * 2026-06-17    Camilo Andres Ramirez Ospina    Versión inicial
+ * ------------------------------------------------------------------------------------------------
+**/
+
 // src/components/Vacations/Vacations.jsx
 import React, { useContext } from 'react';
 import { AuthContext } from '../../contexts/AuthContext';
 import { useVacationsLogic } from './useVacationsLogic'; // <-- Importamos su controlador JS
 
+/**
+ * description: Componente principal del módulo de vacaciones.
+ * author: Camilo Andres Ramirez Ospina | 2026-06-17
+ * param: Ninguno (usa useContext para obtener user y refreshUser)
+ * return: JSX con la interfaz completa de gestión de vacaciones.
+ */
 const Vacations = () => {
   const { user, refreshUser } = useContext(AuthContext);
 
-  // Conectamos la lógica al componente visual
   const logic = useVacationsLogic(user, refreshUser);
 
   return (
     <div className="p-1.5 animate-fade-in text-text-main font-poppins">
+
+      {/* ============================================================
+          ENCABEZADO DEL MÓDULO
+          ============================================================
+          description: Encabezado principal que muestra el título y una breve descripción del módulo. */}
+
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-800">Módulo de Vacaciones</h1>
         <p className="text-sm text-text-muted">Gestiona tus solicitudes de descanso y aprobaciones de equipo.</p>
       </div>
 
-      {/* Alertas y Mensajes */}
+      {/* ============================================================
+          ALERTAS Y MENSAJES DE RETROALIMENTACIÓN
+          ============================================================
+          description: Muestra mensajes de éxito o error después de acciones (envío, aprobación, etc.). */}
+
       {logic.message.text && (
         <div className={`p-4 mb-6 rounded-xl text-sm font-medium ${
           logic.message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
@@ -26,10 +55,15 @@ const Vacations = () => {
         </div>
       )}
 
-      {/* Grid Principal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
 
-        {/* Formulario de Solicitud */}
+        {/* ------------------------------------------------------------
+            FORMULARIO DE SOLICITUD DE VACACIONES
+            ------------------------------------------------------------
+            description: Formulario para crear una nueva solicitud de vacaciones. Contiene campos
+                         de fecha de inicio, fecha fin, comentarios y un botón de envío.
+                         Se conecta con las funciones del hook useVacationsLogic. */}
+
         <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
             <i className="fa-solid fa-calendar-plus text-primary"></i> Nueva Solicitud
@@ -69,6 +103,13 @@ const Vacations = () => {
               ></textarea>
             </div>
 
+            {/* ----------------------------------------------------------
+                RESULTADO DEL CÁLCULO DE DÍAS HÁBILES Y BOTÓN DE ENVÍO
+                ----------------------------------------------------------
+                description: Muestra el número de días hábiles estimados y el botón para enviar
+                             la solicitud. El botón se deshabilita si no hay días hábiles o
+                             si la carga está en curso. */}
+
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-bg-light p-4 rounded-xl border border-gray-100">
               <div className="text-sm">
                 <span className="text-text-muted">Días hábiles estimados:</span>{' '}
@@ -86,7 +127,12 @@ const Vacations = () => {
           </form>
         </div>
 
-        {/* Resumen de Saldos */}
+        {/* ------------------------------------------------------------
+            RESUMEN DE SALDOS Y DATOS DEL USUARIO
+            ------------------------------------------------------------
+            description: Tarjeta que muestra los días de vacaciones disponibles, el proyecto activo
+                         y el líder aprobador del usuario actual. */}
+
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
           <div>
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
@@ -120,7 +166,12 @@ const Vacations = () => {
         </div>
       </div>
 
-      {/* Historial de la Tabla (HTML Empleado) */}
+      {/* ============================================================
+          TABLA DE HISTORIAL DE SOLICITUDES
+          ============================================================
+          description: Tabla que lista todas las solicitudes de vacaciones realizadas por el usuario
+                       actual, mostrando ID, fechas, días hábiles, comentarios y estado. */}
+
       <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
           <i className="fa-solid fa-history text-primary"></i> Mi Historial de Solicitudes
@@ -145,6 +196,11 @@ const Vacations = () => {
                   </td>
                 </tr>
               ) : (
+                /* --------------------------------------------
+                   RENDERIZADO DE CADA SOLICITUD
+                   --------------------------------------------
+                   description: Mapeo de cada solicitud para renderizar una fila en la tabla.
+                                Cada fila muestra los datos de la solicitud y el estado con colores. */
                 logic.misSolicitudes.map((sol) => (
                   <tr key={sol.idSolicitud} className="hover:bg-bg-light/40 transition-colors">
                     <td className="py-3.5 px-4 font-medium text-gray-500">#{sol.idSolicitud}</td>
@@ -168,7 +224,13 @@ const Vacations = () => {
         </div>
       </section>
 
-      {/* Vista del Panel del Líder (Condicional) */}
+      {/* ============================================================
+          PANEL DE APROBACIONES PARA LÍDERES (Condicional)
+          ============================================================
+          description: Panel que solo se muestra si el usuario actual es líder de proyecto
+                       (idUsuario === idResponsableP). Muestra las solicitudes pendientes de los
+                       miembros del equipo con botones para aprobar o rechazar. */}
+
       {user?.idUsuario === user?.idResponsableP && (
         <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-fade-in">
           <div className="border-b border-gray-100 pb-3 mb-4">
@@ -197,6 +259,11 @@ const Vacations = () => {
                     </td>
                   </tr>
                 ) : (
+                  /* --------------------------------------------
+                     RENDERIZADO DE SOLICITUDES PENDIENTES
+                     --------------------------------------------
+                     description: Mapeo de cada solicitud pendiente con botones para aprobar o rechazar.
+                                  Cada fila muestra el nombre del empleado, fechas, días y comentarios. */
                   logic.solicitudesPendientesLider.map((sol) => (
                     <tr key={sol.idSolicitud} className="hover:bg-bg-light/40 transition-colors">
                       <td className="py-3.5 px-4 font-medium">{sol.NombreEmpleado} {sol.ApellidoEmpleado}</td>
