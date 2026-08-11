@@ -1,10 +1,11 @@
 const mysql = require('mysql2');
+require('dotenv').config();
 
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'Senasgtv7',
-  database: 'sgtv_db'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
 connection.connect((err) => {
@@ -12,7 +13,7 @@ connection.connect((err) => {
     console.error('Error conectando a MySQL:', err);
     return;
   }
-  console.log('Conexión exitosa a la base de datos sgtv_db');
+  console.log('Conexión exitosa a la base de datos');
 });
 
 module.exports = connection;
