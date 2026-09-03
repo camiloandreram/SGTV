@@ -15,6 +15,8 @@
 // Login.jsx - La interfaz visual (HTML / JSX)
 import React from 'react';
 import { useLoginLogic } from './useLoginLogic';
+import { Link } from 'react-router-dom';
+import '../../css/login.css';
 
 /**
  * description: Componente principal de la página de login.
@@ -79,6 +81,7 @@ const Login = () => {
                 placeholder="nombre.apellido@vass.com"
                 value={logic.email}
                 onChange={(e) => logic.setEmail(e.target.value)}
+                onFocus={logic.clearError}
                 className="w-full bg-slate-50 border border-slate-200 focus:border-primary focus:bg-white rounded-xl pl-11 pr-4 py-3.5 text-sm font-medium focus:outline-none transition-all duration-300"
                 required
               />
@@ -154,13 +157,12 @@ const Login = () => {
         {/* ============================================================
             ENLACE DE RECUPERACIÓN DE CONTRASEÑA
             ============================================================
-            description: Enlace (aún no funcional) para restablecer la contraseña
-                         en caso de olvido. */}
+             */}
 
         <div className="text-center mt-6">
-          <a href="#" className="text-xs text-text-muted hover:text-primary transition-colors underline underline-offset-4">
+          <Link to="/forgot-password" className="text-xs text-text-muted hover:text-primary transition-colors underline underline-offset-4">
             ¿Olvidaste tu contraseña?
-          </a>
+          </Link>
         </div>
       </div>
     </div>

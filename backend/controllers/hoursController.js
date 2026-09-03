@@ -1,65 +1,79 @@
 // controllers/hoursController.js
 const db = require('../db');
-const colombianHolidays = require('colombian-holidays');
-const { getHolidaysByYear } = colombianHolidays;
+const { getHolidaysForYear } = require('../utils/holidays'); // Importamos nuestra función
 
-// Guardar reporte de horas semanal
+// Guardar reporte de horas semanal (soporta múltiples proyectos)
 exports.guardarReporteHoras = (req, res) => {
     const { idUsuario, fechaInicioSemana, reporte } = req.body;
     if (!idUsuario || !fechaInicioSemana || !reporte) {
         return res.status(400).json({ success: false, message: 'Faltan datos requeridos.' });
     }
 
-    // Eliminar registro anterior de la misma semana para sobreescribir
-    const sqlDelete = 'DELETE FROM `Reporte Horas` WHERE `idUsuarioRH` = ? AND `Fecha_Inicio_Semanal` = ?';
+    if (!Array.isArray(reporte) || reporte.length === 0) {
+        return res.status(400).json({ success: false, message: 'El reporte debe ser un arreglo no vacío.' });
+    }
+
+    // Eliminar todos los registros de la semana para este usuario
+    const sqlDelete = 'DELETE FROM reporte_horas WHERE idUsuarioRH = ? AND Fecha_Inicio_Semanal = ?';
     db.query(sqlDelete, [idUsuario, fechaInicioSemana], (delErr) => {
         if (delErr) {
             console.error('Error al eliminar reporte anterior:', delErr);
             return res.status(500).json({ success: false, message: 'Error interno.' });
         }
 
-        // Construir objeto con horas por día
-        let horasLunes = 0, horasMartes = 0, horasMiercoles = 0, horasJueves = 0, horasViernes = 0;
-        const idProyectoRH = reporte[0]?.idProyecto || 1; // Asume un solo proyecto, pero debería ser por proyecto
-
-        reporte.forEach((item) => {
-            const dia = new Date(item.fecha + 'T00:00:00').getDay();
-            const horas = parseFloat(item.horas) || 0;
-            if (dia === 1) horasLunes = horas;
-            else if (dia === 2) horasMartes = horas;
-            else if (dia === 3) horasMiercoles = horas;
-            else if (dia === 4) horasJueves = horas;
-            else if (dia === 5) horasViernes = horas;
-        });
-
-        const sqlInsert = `
-            INSERT INTO \`Reporte Horas\`
-            (\`idUsuarioRH\`, \`idProyectoRH\`, \`Fecha_Inicio_Semanal\`, \`horasLunes\`, \`horasMartes\`, \`horasMiercoles\`, \`horasJueves\`, \`horasViernes\`)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-        db.query(sqlInsert, [idUsuario, idProyectoRH, fechaInicioSemana, horasLunes, horasMartes, horasMiercoles, horasJueves, horasViernes], (insErr) => {
-            if (insErr) {
-                console.error('Error al insertar reporte:', insErr);
-                return res.status(500).json({ success: false, message: 'Error al registrar las horas.' });
+        // Insertar un registro por proyecto
+        const insertPromises = reporte.map((item) => {
+            const { idProyecto, horas } = item;
+            if (!idProyecto || !Array.isArray(horas) || horas.length !== 7) {
+                throw new Error('Cada proyecto debe tener un arreglo de 7 horas.');
             }
-            return res.status(200).json({ success: true, message: 'Reporte guardado exitosamente.' });
+            const [horasLunes, horasMartes, horasMiercoles, horasJueves, horasViernes] = horas;
+            return new Promise((resolve, reject) => {
+                const sqlInsert = `
+                    INSERT INTO reporte_horas
+                    (idUsuarioRH, idProyectoRH, Fecha_Inicio_Semanal, horasLunes, horasMartes, horasMiercoles, horasJueves, horasViernes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                `;
+                db.query(sqlInsert, [
+                    idUsuario,
+                    idProyecto,
+                    fechaInicioSemana,
+                    parseFloat(horasLunes) || 0,
+                    parseFloat(horasMartes) || 0,
+                    parseFloat(horasMiercoles) || 0,
+                    parseFloat(horasJueves) || 0,
+                    parseFloat(horasViernes) || 0
+                ], (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
         });
+
+        Promise.all(insertPromises)
+            .then(() => {
+                res.status(200).json({ success: true, message: 'Reporte guardado exitosamente.' });
+            })
+            .catch((err) => {
+                console.error('Error al insertar reporte:', err);
+                res.status(500).json({ success: false, message: 'Error al registrar las horas.' });
+            });
     });
 };
 
-// Obtener reporte de horas de una semana específica
+// Obtener reporte de horas de una semana específica (con proyectos)
 exports.obtenerReporteHoras = (req, res) => {
     const { idUsuario, fechaInicioSemana } = req.query;
     if (!idUsuario || !fechaInicioSemana) {
         return res.status(400).json({ success: false, message: 'Faltan parámetros requeridos.' });
     }
 
-    // Calcular festivos de la semana
+    // Calcular festivos de la semana usando nuestra función
     const lunes = new Date(fechaInicioSemana + 'T00:00:00');
     const anoActual = lunes.getFullYear();
     let listaFestivosOficiales = [];
     try {
-        listaFestivosOficiales = getHolidaysByYear(anoActual).map(h => h.date);
+        listaFestivosOficiales = getHolidaysForYear(anoActual) || []; // Usamos nuestra función
     } catch (libErr) {
         console.warn("Error al consultar festivos semanales:", libErr);
     }
@@ -72,34 +86,50 @@ exports.obtenerReporteHoras = (req, res) => {
         festivosSemana.push(listaFestivosOficiales.includes(isoStr));
     }
 
-    // Consultar horas registradas
-    const sqlHoras = 'SELECT horasLunes, horasMartes, horasMiercoles, horasJueves, horasViernes FROM `Reporte Horas` WHERE `idUsuarioRH` = ? AND `Fecha_Inicio_Semanal` = ?';
-    db.query(sqlHoras, [idUsuario, fechaInicioSemana], (errHoras, rowsHoras) => {
-        if (errHoras) {
-            console.error('Error al consultar horas:', errHoras);
+    // Obtener todos los proyectos con sus horas para esta semana
+    const sqlProyectos = `
+        SELECT idProyectoRH, horasLunes, horasMartes, horasMiercoles, horasJueves, horasViernes
+        FROM reporte_horas
+        WHERE idUsuarioRH = ? AND Fecha_Inicio_Semanal = ?
+    `;
+    db.query(sqlProyectos, [idUsuario, fechaInicioSemana], (err, rows) => {
+        if (err) {
+            console.error('Error al consultar horas:', err);
             return res.status(500).json({ success: false, message: 'Error al consultar horas.' });
         }
 
-        const reportes = [0, 0, 0, 0, 0, 0, 0];
-        if (rowsHoras && rowsHoras.length > 0) {
-            const registro = rowsHoras[0];
-            reportes[0] = parseFloat(registro.horasLunes) || 0;
-            reportes[1] = parseFloat(registro.horasMartes) || 0;
-            reportes[2] = parseFloat(registro.horasMiercoles) || 0;
-            reportes[3] = parseFloat(registro.horasJueves) || 0;
-            reportes[4] = parseFloat(registro.horasViernes) || 0;
-        }
+        const reporteProyectos = rows.map(row => ({
+            idProyecto: row.idProyectoRH,
+            horas: [
+                parseFloat(row.horasLunes) || 0,
+                parseFloat(row.horasMartes) || 0,
+                parseFloat(row.horasMiercoles) || 0,
+                parseFloat(row.horasJueves) || 0,
+                parseFloat(row.horasViernes) || 0,
+                0, 0
+            ]
+        }));
 
-        // Total mensual
+        // Total mensual (suma de todas las horas de todos los proyectos)
         const prefijoMes = fechaInicioSemana.substring(0, 7);
-        const sqlMes = 'SELECT SUM(horasLunes + horasMartes + horasMiercoles + horasJueves + horasViernes) as totalMes FROM `Reporte Horas` WHERE `idUsuarioRH` = ? AND `Fecha_Inicio_Semanal` LIKE ?';
+        const sqlMes = `
+            SELECT SUM(horasLunes + horasMartes + horasMiercoles + horasJueves + horasViernes) as totalMes
+            FROM reporte_horas
+            WHERE idUsuarioRH = ? AND Fecha_Inicio_Semanal LIKE ?
+        `;
         db.query(sqlMes, [idUsuario, `${prefijoMes}%`], (errMes, rowsMes) => {
             if (errMes) {
                 console.error('Error en métricas mensuales:', errMes);
                 return res.status(500).json({ success: false, message: 'Error en métricas mensuales.' });
             }
             const totalHorasMes = rowsMes[0]?.totalMes ? parseFloat(rowsMes[0].totalMes) : 0;
-            return res.json({ success: true, reportes, totalHorasMes, minimoHorasMes: 160, festivosSemana });
+            return res.json({
+                success: true,
+                proyectos: reporteProyectos,
+                totalHorasMes,
+                minimoHorasMes: 160,
+                festivosSemana
+            });
         });
     });
 };

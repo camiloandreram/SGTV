@@ -219,22 +219,25 @@ const Dashboard = () => {
                                Muestra un icono de playa/paraguas, título y descripción.
                                Permite consultar días disponibles, solicitar periodos
                                de descanso y hacer seguimiento a aprobaciones. */}
-              <a href="/empleados" className="group bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:border-red-100 transition-all duration-300 flex flex-col justify-between">
-                <div>
-                  <div className="bg-gray-50 group-hover:bg-red-50 text-text-muted group-hover:text-primary w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-colors duration-300">
-                    <i className="fa-solid fa-user-plus"></i>
+
+              {(user?.idPerfil === 1 || user?.idPerfil === 2) && (
+                <a href="/empleados" className="group bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:border-red-100 transition-all duration-300 flex flex-col justify-between">
+                  <div>
+                    <div className="bg-gray-50 group-hover:bg-red-50 text-text-muted group-hover:text-primary w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-colors duration-300">
+                      <i className="fa-solid fa-user-plus"></i>
+                    </div>
+                    <h4 className="font-bold text-base mt-4 text-text-main group-hover:text-primary transition-colors">
+                      Gestión de Empleados
+                    </h4>
+                    <p className="text-sm text-text-muted mt-2 leading-relaxed">
+                      Registra nuevos colaboradores en el sistema, asigna su rol de acceso y vincula su departamento correspondiente.
+                    </p>
                   </div>
-                  <h4 className="font-bold text-base mt-4 text-text-main group-hover:text-primary transition-colors">
-                    Gestión de Empleados
-                  </h4>
-                  <p className="text-sm text-text-muted mt-2 leading-relaxed">
-                    Registra nuevos colaboradores en el sistema, asigna su rol de acceso y vincula su departamento correspondiente.
-                  </p>
-                </div>
-                <div className="mt-6 flex items-center text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 gap-1.5">
-                  Ingresar módulo <i className="fa-solid fa-arrow-right-long text-[10px]"></i>
-                </div>
-              </a>
+                  <div className="mt-6 flex items-center text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 gap-1.5">
+                    Ingresar módulo <i className="fa-solid fa-arrow-right-long text-[10px]"></i>
+                  </div>
+                </a>
+              )}
             </div>
           </section>
 

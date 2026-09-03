@@ -1,12 +1,12 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../contexts/AuthContext';
 import { useUserListLogic } from './UserListLogic';
 
-/**
- * description: Vista de panel principal para la Gestión de Empleados en SGTV.
- * author:      Camilo Andres Ramirez Ospina | 2026-06-18
- */
 const UserList = () => {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   const {
     usuarios,
     loading,
@@ -14,6 +14,18 @@ const UserList = () => {
     handleInactivarRapido,
     handleEliminarFisicoRapido
   } = useUserListLogic();
+
+  useEffect(() => {
+    // Si el usuario no es Admin ni Jefe Lider, redirigir al dashboard
+    if (user && user.idPerfil !== 1 && user.idPerfil !== 2) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  // Si no está autorizado, no renderizar nada (porque redirige)
+  if (user && user.idPerfil !== 1 && user.idPerfil !== 2) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-poppins p-6 text-text-main">

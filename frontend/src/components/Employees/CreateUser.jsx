@@ -9,6 +9,10 @@ const CreateUser = () => {
     departamentos,
     message,
     loading,
+    showPassword,
+    showConfirmPassword,
+    setShowPassword,
+    setShowConfirmPassword,
     handleInputChange,
     handleSubmit
   } = useCreateUserLogic();
@@ -67,7 +71,7 @@ const CreateUser = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono / Celular</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono / Celular *</label>
               <input
                 type="text"
                 name="telefono"
@@ -75,10 +79,11 @@ const CreateUser = () => {
                 onChange={handleInputChange}
                 placeholder="Ej. 3157654321"
                 className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium bg-gray-50 focus:border-red-400 focus:bg-white outline-none transition-all"
+                required
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Dirección Residencial</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Dirección Residencial *</label>
               <input
                 type="text"
                 name="direccion"
@@ -86,6 +91,7 @@ const CreateUser = () => {
                 onChange={handleInputChange}
                 placeholder="Ej. Calle 26 # 30-26, Bogotá"
                 className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium bg-gray-50 focus:border-red-400 focus:bg-white outline-none transition-all"
+                required
               />
             </div>
           </div>
@@ -105,19 +111,49 @@ const CreateUser = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contraseña *</label>
-              <input
-                type="password"
-                name="contraseña"
-                value={formData.contraseña}
-                onChange={handleInputChange}
-                placeholder="••••••••"
-                className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium bg-gray-50 focus:border-red-400 focus:bg-white outline-none transition-all"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="contraseña"
+                  value={formData.contraseña}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium bg-gray-50 focus:border-red-400 focus:bg-white outline-none transition-all pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                >
+                  <i className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Confirmar Contraseña *</label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  name="confirmarContraseña"
+                  value={formData.confirmarContraseña}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium bg-gray-50 focus:border-red-400 focus:bg-white outline-none transition-all pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+                >
+                  <i className={`fa-solid ${showConfirmPassword ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                </button>
+              </div>
+            </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Perfil / Rol de Acceso *</label>
               <select
@@ -133,6 +169,9 @@ const CreateUser = () => {
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Departamento Organizacional *</label>
               <select
@@ -147,6 +186,30 @@ const CreateUser = () => {
                   <option key={dep.idDepartamento} value={dep.idDepartamento}>{dep.Nombre}</option>
                 ))}
               </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha de Nacimiento *</label>
+              <input
+                type="date"
+                name="fechaNacimiento"
+                value={formData.fechaNacimiento}
+                onChange={handleInputChange}
+                className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium bg-gray-50 focus:border-red-400 focus:bg-white outline-none transition-all"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha de Ingreso *</label>
+              <input
+                type="date"
+                name="fechaIngreso"
+                value={formData.fechaIngreso}
+                onChange={handleInputChange}
+                className="w-full border border-gray-200 rounded-xl p-2.5 text-xs font-medium bg-gray-50 focus:border-red-400 focus:bg-white outline-none transition-all"
+                required
+              />
             </div>
           </div>
 

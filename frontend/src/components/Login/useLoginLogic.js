@@ -11,51 +11,23 @@
  * ------------------------------------------------------------------------------------------------
 **/
 
-// useLoginLogic.js - El controlador de la lógica
 import { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
 
-/**
- * Hook principal que encapsula toda la lógica de autenticación.
- * Recibe el contexto de autenticación y expone estado y manejadores.
- */
+
 export const useLoginLogic = () => {
-
-  /**
-   * description: Correo electrónico del usuario ingresado en el formulario
-   */
   const [email, setEmail] = useState('');
-
-  /**
-   * description: Contraseña del usuario ingresada en el formulario
-   */
   const [password, setPassword] = useState('');
-
-  /**
-   * description: Controla si la contraseña se muestra en texto plano o como puntos
-   */
   const [showPassword, setShowPassword] = useState(false);
-
-  /**
-   * description: Mensaje de error que se muestra cuando falla la autenticación
-   */
   const [error, setError] = useState('');
-
-  /**
-   * description: Indicador de carga para deshabilitar el botón durante la petición
-   */
   const [loading, setLoading] = useState(false);
-
-  // Se obtiene la función login del contexto de autenticación
   const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  /**
-   * description: Maneja el envío del formulario de inicio de sesión
-   * author: Camilo Andres Ramirez Ospina | 2026-06-17
-   * param: e - Evento del formulario
-   * return: void
-   */
+  const clearError = () => setError('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -63,12 +35,11 @@ export const useLoginLogic = () => {
 
     try {
       const data = await apiService.login(email, password);
-
       if (data.success) {
         login(data.user);
-        window.location.href = '/';
+        navigate('/');
       } else {
-        setError(data.message);
+        setError(data.message || 'Credenciales incorrectas');
       }
     } catch (err) {
       setError('Error de conexión con el servidor');
@@ -77,20 +48,5 @@ export const useLoginLogic = () => {
     }
   };
 
-  /**
-   * description: Expone todas las variables y funciones para el componente que consuma este hook
-   * author: Camilo Andres Ramirez Ospina | 2026-06-17
-   * return: Objeto con el estado y los manejadores del login
-   */
-  return {
-    email,
-    setEmail,
-    password,
-    setPassword,
-    showPassword,
-    setShowPassword,
-    error,
-    loading,
-    handleSubmit
-  };
+  return { email, setEmail, password, setPassword, showPassword, setShowPassword, error, loading, clearError, handleSubmit };
 };

@@ -1,4 +1,6 @@
+// src/contexts/AuthContext.jsx
 import React, { createContext, useState, useEffect } from 'react';
+import { apiService } from '../services/api'; // Asegúrate de importar apiService
 
 export const AuthContext = createContext();
 
@@ -22,17 +24,17 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
     window.location.href = '/login';
   };
 
   const refreshUser = async () => {
     if (!user?.idUsuario) return;
     try {
-      const response = await fetch(`/api/usuario/${user.idUsuario}`);
-      const data = await response.json();
-      if (data.success) {
-        setUser(data.user);
-        sessionStorage.setItem('user', JSON.stringify(data.user));
+      const response = await apiService.obtenerUsuarioPorId(user.idUsuario);
+      if (response.success) {
+        setUser(response.user);
+        sessionStorage.setItem('user', JSON.stringify(response.user));
       }
     } catch (error) {
       console.error('Error refrescando usuario:', error);

@@ -1,33 +1,7 @@
 // controllers/vacationController.js
 const db = require('../db');
-const colombianHolidays = require('colombian-holidays');
-const { getHolidaysByYear } = colombianHolidays;
+const { calcularDiasHabilesColombia } = require('../utils/holidays');
 
-// Función auxiliar para calcular días hábiles (incluye festivos colombianos)
-function calcularDiasHabilesColombia(fechaInicioStr, fechaFinStr) {
-    let fechaActual = new Date(fechaInicioStr + 'T00:00:00');
-    const fechaFin = new Date(fechaFinStr + 'T00:00:00');
-    if (fechaActual > fechaFin) return 0;
-    const anoActual = fechaActual.getFullYear();
-    let festivos = [];
-    try {
-        festivos = getHolidaysByYear(anoActual).map(h => h.date);
-    } catch (e) {
-        console.error("Error al obtener festivos oficiales:", e);
-    }
-    let diasHabiles = 0;
-    while (fechaActual <= fechaFin) {
-        const diaSemana = fechaActual.getDay(); // 0=Dom, 6=Sáb
-        const stringFecha = fechaActual.toISOString().split('T')[0];
-        const esFinDeSemana = (diaSemana === 0 || diaSemana === 6);
-        const esFestivo = festivos.includes(stringFecha);
-        if (!esFinDeSemana && !esFestivo) {
-            diasHabiles++;
-        }
-        fechaActual.setDate(fechaActual.getDate() + 1);
-    }
-    return diasHabiles;
-}
 
 // Obtener solicitudes de un usuario
 exports.obtenerMisSolicitudes = (req, res) => {
@@ -37,7 +11,7 @@ exports.obtenerMisSolicitudes = (req, res) => {
     }
     const query = `
         SELECT idSolicitud, Fecha_Inicio, Fecha_Fin, cantidadDias, Estado, comentarios
-        FROM \`Solicitud de Vacaciones\`
+        FROM solicitud_vacaciones
         WHERE idUsuarioSV = ?
         ORDER BY Fecha_Solicitud DESC
     `;
@@ -59,8 +33,8 @@ exports.obtenerPendientesLider = (req, res) => {
     const query = `
         SELECT sv.idSolicitud, sv.Fecha_Inicio, sv.Fecha_Fin, sv.cantidadDias, sv.comentarios,
                u.Nombre AS NombreEmpleado, u.Apellido AS ApellidoEmpleado
-        FROM \`Solicitud de Vacaciones\` sv
-        JOIN \`Usuario\` u ON sv.idUsuarioSV = u.idUsuario
+        FROM solicitud_vacaciones sv
+        JOIN usuario u ON sv.idUsuarioSV = u.idUsuario
         WHERE sv.idAprobador = ? AND sv.Estado = 'Pendiente'
     `;
     db.query(query, [idLider], (err, solicitudes) => {
@@ -72,7 +46,7 @@ exports.obtenerPendientesLider = (req, res) => {
     });
 };
 
-// Crear una nueva solicitud de vacaciones
+// Crear una nueva solicitud de vacaciones (con autoincrement)
 exports.solicitarVacaciones = (req, res) => {
     const {
         idUsuario,
@@ -96,6 +70,8 @@ exports.solicitarVacaciones = (req, res) => {
     }
 
     const cantidadDias = calcularDiasHabilesColombia(fInicio, fFin);
+    console.log(`Cálculo backend: ${cantidadDias} días hábiles entre ${fInicio} y ${fFin}`);
+
     if (cantidadDias === 0) {
         return res.status(400).json({
             success: false,
@@ -103,35 +79,48 @@ exports.solicitarVacaciones = (req, res) => {
         });
     }
 
-    // Generar un ID único (aunque en producción debería ser autoincrement)
-    const idSolicitudUnico = Math.floor(100000 + Math.random() * 900000);
-
-    const insertQuery = `
-        INSERT INTO \`Solicitud de Vacaciones\` 
-        (idSolicitud, idUsuarioSV, Fecha_Inicio, Fecha_Fin, cantidadDias, Estado, Fecha_Solicitud, idAprobador, comentarios)
-        VALUES (?, ?, ?, ?, ?, 'Pendiente', ?, ?, ?)
-    `;
-    db.query(insertQuery, [idSolicitudUnico, idUsuario, fInicio, fFin, cantidadDias, fechaSolicitud, idAprobador, comentarios], (insErr, result) => {
-        if (insErr) {
-            console.error("Error SQL en inserción:", insErr);
-            return res.status(500).json({ success: false, message: 'Error al registrar la solicitud en la base de datos.' });
+    // Verificar días disponibles del usuario
+    const disponibilidadQuery = 'SELECT vacaciones_disponibles FROM usuario WHERE idUsuario = ?';
+    db.query(disponibilidadQuery, [idUsuario], (err, results) => {
+        if (err || results.length === 0) {
+            return res.status(500).json({ success: false, message: 'Error al verificar días disponibles.' });
         }
-        res.json({
-            success: true,
-            message: `Solicitud creada con éxito (${cantidadDias} días hábiles) y enviada a tu líder.`,
-            solicitud: {
-                idSolicitud: idSolicitudUnico,
-                Fecha_Inicio: fInicio,
-                Fecha_Fin: fFin,
-                cantidadDias: cantidadDias,
-                Estado: 'Pendiente',
-                comentarios: comentarios
+        const disponibles = results[0].vacaciones_disponibles;
+        if (disponibles < cantidadDias) {
+            return res.status(400).json({
+                success: false,
+                message: `No tienes suficientes días disponibles. Tienes ${disponibles} y solicitas ${cantidadDias}.`
+            });
+        }
+
+        // Insertar sin especificar idSolicitud (auto-increment)
+        const insertQuery = `
+            INSERT INTO solicitud_vacaciones
+            (idUsuarioSV, Fecha_Inicio, Fecha_Fin, cantidadDias, Estado, Fecha_Solicitud, idAprobador, comentarios)
+            VALUES (?, ?, ?, ?, 'Pendiente', ?, ?, ?)
+        `;
+        db.query(insertQuery, [idUsuario, fInicio, fFin, cantidadDias, fechaSolicitud, idAprobador, comentarios], (insErr, result) => {
+            if (insErr) {
+                console.error("Error SQL en inserción:", insErr);
+                return res.status(500).json({ success: false, message: 'Error al registrar la solicitud.' });
             }
+            res.json({
+                success: true,
+                message: `Solicitud creada con éxito (${cantidadDias} días hábiles) y enviada a tu líder.`,
+                solicitud: {
+                    idSolicitud: result.insertId,
+                    Fecha_Inicio: fInicio,
+                    Fecha_Fin: fFin,
+                    cantidadDias,
+                    Estado: 'Pendiente',
+                    comentarios
+                }
+            });
         });
     });
 };
 
-// Procesar (aprobar/rechazar) una solicitud
+// Procesar (aprobar/rechazar) con transacción (sin cambios en esta función)
 exports.procesarSolicitud = (req, res) => {
     const { idSolicitud, accion } = req.body;
     if (!idSolicitud || !accion) {
@@ -141,32 +130,62 @@ exports.procesarSolicitud = (req, res) => {
     const nuevoEstado = (accion === 'Aprobar') ? 'Aprobado' : 'Rechazado';
     const fechaAprobacion = new Date().toISOString().split('T')[0];
 
-    const buscarSolicitud = `SELECT idUsuarioSV, cantidadDias FROM \`Solicitud de Vacaciones\` WHERE idSolicitud = ?`;
-    db.query(buscarSolicitud, [idSolicitud], (err, results) => {
-        if (err || results.length === 0) {
-            return res.status(404).json({ success: false, message: 'Solicitud no encontrada.' });
+    db.beginTransaction((err) => {
+        if (err) {
+            console.error('Error al iniciar transacción:', err);
+            return res.status(500).json({ success: false, message: 'Error al iniciar transacción.' });
         }
-        const { idUsuarioSV, cantidadDias } = results[0];
 
-        // Usar transacción para consistencia (pero aquí usamos dos queries secuenciales)
-        const updateSolicitud = `UPDATE \`Solicitud de Vacaciones\` SET Estado = ?, Fecha_Aprobacion = ? WHERE idSolicitud = ?`;
-        db.query(updateSolicitud, [nuevoEstado, fechaAprobacion, idSolicitud], (upErr) => {
-            if (upErr) {
-                return res.status(500).json({ success: false, message: 'Error al procesar la solicitud.' });
-            }
-            if (nuevoEstado === 'Aprobado') {
-                const descontarDiasQuery = `UPDATE \`Usuario\` SET vacaciones_disponibles = vacaciones_disponibles - ? WHERE idUsuario = ?`;
-                db.query(descontarDiasQuery, [cantidadDias, idUsuarioSV], (descErr) => {
-                    if (descErr) {
-                        console.error("Error al restar días al usuario:", descErr);
-                        // Aquí deberíamos hacer rollback, pero como no tenemos transacción, mejor notificar
-                        return res.status(500).json({ success: false, message: 'Error al descontar días. La solicitud se aprobó pero no se descontaron días.' });
-                    }
-                    return res.json({ success: true, message: 'Solicitud aprobada y días descontados con éxito.' });
+        const buscarSolicitud = `SELECT idUsuarioSV, cantidadDias FROM solicitud_vacaciones WHERE idSolicitud = ?`;
+        db.query(buscarSolicitud, [idSolicitud], (err, results) => {
+            if (err || results.length === 0) {
+                return db.rollback(() => {
+                    res.status(404).json({ success: false, message: 'Solicitud no encontrada.' });
                 });
-            } else {
-                res.json({ success: true, message: 'Solicitud rechazada correctamente.' });
             }
+
+            const { idUsuarioSV, cantidadDias } = results[0];
+
+            const updateSolicitud = `UPDATE solicitud_vacaciones SET Estado = ?, Fecha_Aprobacion = ? WHERE idSolicitud = ?`;
+            db.query(updateSolicitud, [nuevoEstado, fechaAprobacion, idSolicitud], (err) => {
+                if (err) {
+                    return db.rollback(() => {
+                        console.error('Error al actualizar solicitud:', err);
+                        res.status(500).json({ success: false, message: 'Error al actualizar la solicitud.' });
+                    });
+                }
+
+                if (nuevoEstado === 'Aprobado') {
+                    const descontarQuery = `UPDATE usuario SET vacaciones_disponibles = vacaciones_disponibles - ? WHERE idUsuario = ?`;
+                    db.query(descontarQuery, [cantidadDias, idUsuarioSV], (err) => {
+                        if (err) {
+                            return db.rollback(() => {
+                                console.error('Error al descontar días:', err);
+                                res.status(500).json({ success: false, message: 'Error al descontar días.' });
+                            });
+                        }
+                        db.commit((err) => {
+                            if (err) {
+                                return db.rollback(() => {
+                                    console.error('Error al hacer commit:', err);
+                                    res.status(500).json({ success: false, message: 'Error al finalizar la transacción.' });
+                                });
+                            }
+                            res.json({ success: true, message: 'Solicitud aprobada y días descontados con éxito.' });
+                        });
+                    });
+                } else {
+                    db.commit((err) => {
+                        if (err) {
+                            return db.rollback(() => {
+                                console.error('Error al hacer commit:', err);
+                                res.status(500).json({ success: false, message: 'Error al finalizar la transacción.' });
+                            });
+                        }
+                        res.json({ success: true, message: 'Solicitud rechazada correctamente.' });
+                    });
+                }
+            });
         });
     });
 };

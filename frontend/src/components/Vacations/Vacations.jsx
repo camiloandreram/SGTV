@@ -67,13 +67,12 @@ const Vacations = () => {
               <div className="text-sm">
                 <span className="text-text-muted">Días hábiles estimados:</span>{' '}
                 <strong className="text-primary text-base font-bold">{logic.calculatedDays} días</strong>
-                <p className="text-xs text-text-muted mt-0.5">(Excluye fines de semana. Los festivos se validarán en el servidor).</p>
+                <p className="text-xs text-text-muted mt-0.5">(Excluye fines de semana y festivos colombianos. El cálculo final se valida en el servidor).</p>
               </div>
               <button
                 type="submit"
                 disabled={logic.loading || logic.calculatedDays === 0}
-                className="bg-primary text-white text-sm font-semibold px-6 py-3 rounded-xl hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-900/10"
-              >
+                className="bg-primary text-white text-sm font-semibold px-6 py-3 rounded-xl hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-900/10">
                 {logic.loading ? <span className="flex items-center gap-2"><i className="fa-solid fa-spinner animate-spin"></i> Enviando...</span> : 'Enviar Solicitud'}
               </button>
             </div>

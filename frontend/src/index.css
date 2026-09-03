@@ -1,3 +1,40 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Variables personalizadas (si no están en otro lado) */
+:root {
+  --primary: #C62828;
+  --primary-dark: #a82222;
+  --bg-main: #f8f9fa;
+  --bg-login: #fcfcfc;
+  --white: #ffffff;
+  --text-main: #2d3436;
+  --text-muted: #7f8c8d;
+  --border-color: #f0f0f0;
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Clases personalizadas para usar con Tailwind */
+.bg-primary {
+  background-color: var(--primary);
+}
+.bg-primary-dark {
+  background-color: var(--primary-dark);
+}
+.text-primary {
+  color: var(--primary);
+}
+.text-text-main {
+  color: var(--text-main);
+}
+.text-text-muted {
+  color: var(--text-muted);
+}
+.from-primary {
+  --tw-gradient-from: var(--primary);
+}
+.to-primary-dark {
+  --tw-gradient-to: var(--primary-dark);
+}
