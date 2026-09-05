@@ -6,21 +6,18 @@ const nodemailer = require('nodemailer');
 const util = require('util');
 require('dotenv').config();
 
-// Convertir db.query a promesa
 const queryPromise = util.promisify(db.query).bind(db);
 
-// Configurar transporte de correo
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: parseInt(process.env.EMAIL_PORT),
-  secure: false, // true para 465, false para otros puertos
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
 
-// Login (ya existente, pero refactorizado a async/await)
 const login = async (req, res) => {
   const { email, password } = req.body;
 

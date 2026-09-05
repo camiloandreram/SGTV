@@ -48,7 +48,6 @@ api.interceptors.response.use(
 );
 
 export const apiService = {
-  // Autenticación
   login: async (email, password) => {
     try {
       const response = await api.post('/login', { email, password });
@@ -71,7 +70,6 @@ export const apiService = {
     window.location.href = '/login';
   },
 
-  // Usuarios
   obtenerPerfiles: async () => {
     try {
       const response = await api.get('/usuarios/perfiles');
@@ -214,7 +212,6 @@ export const apiService = {
       return { success: false, message: 'Error de conexión' };
     }
   },
-  // Dentro de apiService, después de guardarReporteHoras
 forgotPassword: async (email) => {
   try {
     const response = await api.post('/forgot-password', { email });
