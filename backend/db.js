@@ -9,8 +9,7 @@ const connection = mysql.createConnection({
   database: process.env.DB_NAME,
   dateStrings: true,
   ssl: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false 
 });
 
 connection.connect((err) => {
