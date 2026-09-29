@@ -1,28 +1,17 @@
 import { useState, useEffect } from 'react';
 import { apiService } from '../../services/api';
 
-/**
- * description: Custom Hook encargado de gestionar el estado y acciones del listado de empleados.
- * author:      Camilo Andres Ramirez Ospina | 2026-06-18
- */
 export const useUserListLogic = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  // Función para obtener todos los empleados desde el servidor
   const cargarUsuarios = async () => {
     setLoading(true);
     try {
-      // Usamos el endpoint que ya tienes o que mapearemos en la API
-      if (apiService.obtenerTodosLosUsuarios) {
-        const response = await apiService.obtenerTodosLosUsuarios();
-        if (response.success) {
-          setUsuarios(response.data);
-        }
-      } else {
-        // Fallback de desarrollo por si estás probando la interfaz
-        setUsuarios([]);
+      const response = await apiService.obtenerTodosLosUsuarios();
+      if (response?.success) {
+        setUsuarios(response.data);
       }
     } catch (err) {
       console.error("Error al cargar la lista de empleados", err);
@@ -36,25 +25,38 @@ export const useUserListLogic = () => {
     cargarUsuarios();
   }, []);
 
-  // Función para manejar la inactivación rápida desde la tabla
+  // Ejecuta la inactivación (sin confirm — el modal se encarga)
   const handleInactivarRapido = async (idUsuario) => {
-    if (!window.confirm("¿Estás seguro de que deseas inactivar a este empleado?")) return;
-
     try {
       const response = await apiService.inactivarUsuario(idUsuario);
       if (response.success) {
         setMessage({ text: 'Empleado inactivado con éxito.', type: 'success' });
-        cargarUsuarios(); // Recargamos la lista actualizada
+        cargarUsuarios();
+      } else {
+        setMessage({ text: response.message, type: 'danger' });
       }
     } catch (err) {
       setMessage({ text: 'Error al intentar cambiar el estado.', type: 'danger' });
     }
   };
 
-  // Función para el borrado definitivo físico
-  const handleEliminarFisicoRapido = async (idUsuario) => {
-    if (!window.confirm("⚠️ ¿AVISO CRÍTICO!\n¿Deseas eliminar permanentemente este registro de la base de datos? Esto no se puede deshacer y fallará si tiene histórico.")) return;
+  // Ejecuta la activación (sin confirm)
+  const handleActivarRapido = async (idUsuario) => {
+    try {
+      const response = await apiService.activarUsuario(idUsuario);
+      if (response.success) {
+        setMessage({ text: 'Empleado reactivado con éxito.', type: 'success' });
+        cargarUsuarios();
+      } else {
+        setMessage({ text: response.message, type: 'danger' });
+      }
+    } catch (err) {
+      setMessage({ text: 'Error al intentar activar al empleado.', type: 'danger' });
+    }
+  };
 
+  // Ejecuta la eliminación (sin confirm)
+  const handleEliminarFisicoRapido = async (idUsuario) => {
     try {
       const response = await apiService.eliminarUsuarioFisico(idUsuario);
       if (response.success) {
@@ -73,6 +75,7 @@ export const useUserListLogic = () => {
     loading,
     message,
     handleInactivarRapido,
+    handleActivarRapido,
     handleEliminarFisicoRapido
   };
 };

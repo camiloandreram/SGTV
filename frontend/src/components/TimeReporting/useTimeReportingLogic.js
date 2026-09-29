@@ -1,20 +1,11 @@
 /**
- * ------------------------------------------------------------------------------------------------
- * @Name         useTimeReportingLogic
- * @Author       Camilo Andres Ramirez Ospina
- * @Date         2026-06-17
- * @Group        Time Reporting Module
- * @Description  Custom React hook para la gestión de reporte de horas semanal.
- *               Corregido para evitar bucles infinitos de actualización.
- * @Changes      (most recent first)
- * 2026-08-31    Corrección de bucles: se estabilizan dependencias y se usa useRef para evitar cargas duplicadas.
- * ------------------------------------------------------------------------------------------------
-**/
+ * useTimeReportingLogic.js
+ * Referencia del mes = MES ACTUAL (hoy), no el mes del lunes visible.
+ */
 
-import { useState, useEffect, useCallback, useRef} from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '../../services/api';
 
-// Constantes fuera del componente (no cambian)
 const weekDaysLabels = ['LU', 'MA', 'MI', 'JU', 'VI', 'SÁ', 'DO'];
 
 const obtenerFormatoISO = (date) => {
@@ -24,22 +15,30 @@ const obtenerFormatoISO = (date) => {
     return `${year}-${month}-${day}`;
 };
 
+const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// Devuelve "YYYY-MM" del mes actual real
+const getMesActualStr = () => {
+    const hoy = new Date();
+    return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+};
+
 export const useTimeReportingLogic = (user) => {
     const [currentReferenceDate, setCurrentReferenceDate] = useState(new Date());
     const [weekRangeText, setWeekRangeText] = useState('');
+    const [mesReferenciaTexto, setMesReferenciaTexto] = useState('');
     const [weekHeaders, setWeekHeaders] = useState([]);
+    const [diasMesActual, setDiasMesActual] = useState([false,false,false,false,false,false,false]);
     const [proyectos, setProyectos] = useState([]);
     const [message, setMessage] = useState({ text: '', type: '' });
     const [metaHoras, setMetaHoras] = useState(40);
     const [totalMesTrabajado, setTotalMesTrabajado] = useState(0);
     const [minimoMesExigido, setMinimoMesExigido] = useState(0);
     const [esMesFuturo, setEsMesFuturo] = useState(false);
-    const [festivosSemana, setFestivosSemana] = useState([false, false, false, false, false, false, false]);
+    const [festivosSemana, setFestivosSemana] = useState([false,false,false,false,false,false,false]);
 
-    // Referencia para evitar cargar la misma semana dos veces
     const lastLoadedWeekRef = useRef(null);
 
-    // Actualiza la semana (encabezados, rango, etc.) a partir de una fecha base
     const updateWeekPeriod = useCallback((baseDate) => {
         const d = new Date(baseDate);
         const dayOfWeek = d.getDay();
@@ -47,40 +46,60 @@ export const useTimeReportingLogic = (user) => {
         const monday = new Date(d);
         monday.setDate(d.getDate() + distanceToMonday);
 
+        // ============================================================
+        // REFERENCIA = MES ACTUAL REAL (hoy), no el mes del lunes
+        // ============================================================
         const hoy = new Date();
-        const inicioMesHoy = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        const mesRef = hoy.getMonth();
+        const anioRef = hoy.getFullYear();
+
+        // esMesFuturo: la semana (lunes) pertenece a un mes posterior al actual
+        const inicioMesHoy = new Date(anioRef, mesRef, 1);
         const inicioMesFila = new Date(monday.getFullYear(), monday.getMonth(), 1);
         setEsMesFuturo(inicioMesFila > inicioMesHoy);
 
+        // Badge = mes actual real
+        setMesReferenciaTexto(`${MESES_ES[mesRef]} ${anioRef}`);
+
         const headers = [];
+        const diasDelMes = [];
         for (let i = 0; i < 7; i++) {
             const currentDay = new Date(monday);
             currentDay.setDate(monday.getDate() + i);
+            // Comparar contra el MES ACTUAL REAL
+            const mismoMes = currentDay.getMonth() === mesRef && currentDay.getFullYear() === anioRef;
+            diasDelMes.push(mismoMes);
             headers.push({
                 label: weekDaysLabels[i],
                 display: `${weekDaysLabels[i]} ${currentDay.getDate()}/${currentDay.getMonth() + 1}`,
-                fullDateStr: obtenerFormatoISO(currentDay)
+                fullDateStr: obtenerFormatoISO(currentDay),
+                perteneceAlMes: mismoMes
             });
         }
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
         setWeekRangeText(`${obtenerFormatoISO(monday)} - ${obtenerFormatoISO(sunday)}`);
         setWeekHeaders(headers);
-    }, []); // ⬅️ Dependencias vacías porque weekDaysLabels y obtenerFormatoISO son externos
+        setDiasMesActual(diasDelMes);
+    }, []);
 
-    // Función para cargar horas, recibe la fecha de inicio como parámetro
     const cargarHoras = useCallback(async (fechaInicioSemana) => {
         if (!user?.idUsuario || !fechaInicioSemana) return;
-        // Evitar cargar la misma semana dos veces seguidas
         if (lastLoadedWeekRef.current === fechaInicioSemana) return;
         lastLoadedWeekRef.current = fechaInicioSemana;
 
         try {
-            const response = await apiService.obtenerHorasSemanales(user.idUsuario, fechaInicioSemana);
+            const mesReferencia = getMesActualStr();
+            const response = await apiService.obtenerHorasSemanales(
+                user.idUsuario,
+                fechaInicioSemana,
+                mesReferencia
+            );
+
             if (response && response.success) {
                 setTotalMesTrabajado(response.totalHorasMes || 0);
                 setMinimoMesExigido(response.minimoHorasMes || 160);
-                setFestivosSemana(response.festivosSemana || [false, false, false, false, false, false, false]);
+                setFestivosSemana(response.festivosSemana || [false,false,false,false,false,false,false]);
 
                 let diasFestivosLaborales = 0;
                 for (let i = 0; i < 5; i++) {
@@ -93,15 +112,14 @@ export const useTimeReportingLogic = (user) => {
                         id: p.idProyecto,
                         name: `Proyecto ${p.idProyecto}`,
                         description: 'Proyecto asignado',
-                        hours: p.horas || [0, 0, 0, 0, 0, 0, 0]
+                        hours: p.horas || [0,0,0,0,0,0,0]
                     })));
                 } else {
-                    // Fallback: un proyecto por defecto
                     setProyectos([{
                         id: user.idProyecto || 1,
                         name: user.nombre_proyecto || 'Proyecto Asignado',
                         description: 'Asignación Actual',
-                        hours: [0, 0, 0, 0, 0, 0, 0]
+                        hours: [0,0,0,0,0,0,0]
                     }]);
                 }
                 setMessage({ text: '', type: '' });
@@ -111,7 +129,7 @@ export const useTimeReportingLogic = (user) => {
                     id: user.idProyecto || 1,
                     name: user.nombre_proyecto || 'Proyecto Asignado',
                     description: 'Asignación Actual',
-                    hours: [0, 0, 0, 0, 0, 0, 0]
+                    hours: [0,0,0,0,0,0,0]
                 }]);
             }
         } catch (err) {
@@ -120,37 +138,31 @@ export const useTimeReportingLogic = (user) => {
         }
     }, [user]);
 
-    // Efecto para actualizar la semana cuando cambia la fecha de referencia
     useEffect(() => {
         updateWeekPeriod(currentReferenceDate);
     }, [currentReferenceDate, updateWeekPeriod]);
 
-    // Efecto para cargar horas cuando cambia la semana (weekHeaders)
     useEffect(() => {
         if (weekHeaders.length > 0 && user?.idUsuario) {
-            const fechaInicio = weekHeaders[0].fullDateStr;
-            cargarHoras(fechaInicio);
+            cargarHoras(weekHeaders[0].fullDateStr);
         }
     }, [weekHeaders, cargarHoras, user]);
 
-    // Navegación entre semanas
     const handleNavigateWeek = (direction) => {
         const newDate = new Date(currentReferenceDate);
         if (direction === 'prev') newDate.setDate(currentReferenceDate.getDate() - 7);
         else if (direction === 'next') newDate.setDate(currentReferenceDate.getDate() + 7);
         setCurrentReferenceDate(newDate);
-        // Limpiar proyectos y mensajes mientras se carga la nueva semana
         setProyectos([]);
-        setFestivosSemana([false, false, false, false, false, false, false]);
+        setFestivosSemana([false,false,false,false,false,false,false]);
         setMessage({ text: '', type: '' });
-        // Resetear referencia para permitir carga de la nueva semana
         lastLoadedWeekRef.current = null;
     };
 
-    // Manejar cambio de horas en un input
     const handleHourChange = (projectIndex, dayIndex, value) => {
         const esFestivo = festivosSemana[dayIndex];
-        if (esMesFuturo || esFestivo) return;
+        const esDeOtroMes = !diasMesActual[dayIndex];
+        if (esMesFuturo || esFestivo || esDeOtroMes) return;
         let numericValue = parseFloat(value) || 0;
         if (numericValue < 0) numericValue = 0;
         if (numericValue > 24) numericValue = 24;
@@ -159,12 +171,10 @@ export const useTimeReportingLogic = (user) => {
         setProyectos(updatedProyectos);
     };
 
-    // Cálculo de totales
     const getProjectTotal = (hours) => hours.reduce((sum, h) => sum + h, 0);
     const getDayTotal = (dayIndex) => proyectos.reduce((sum, p) => sum + (p.hours[dayIndex] || 0), 0);
     const getGrandTotal = () => proyectos.reduce((sum, p) => sum + getProjectTotal(p.hours), 0);
 
-    // Guardar reporte
     const handleSubmitReport = async () => {
         if (esMesFuturo) {
             setMessage({ text: 'No está permitido almacenar horas en meses futuros.', type: 'danger' });
@@ -183,11 +193,8 @@ export const useTimeReportingLogic = (user) => {
             });
             if (response && response.success) {
                 setMessage({ text: '¡Reporte guardado exitosamente!', type: 'success' });
-                // Recargar los datos para reflejar los cambios
-                const fechaInicio = weekHeaders[0].fullDateStr;
-                // Resetear referencia para forzar recarga
                 lastLoadedWeekRef.current = null;
-                cargarHoras(fechaInicio);
+                cargarHoras(weekHeaders[0].fullDateStr);
             } else {
                 setMessage({ text: response.message || 'Error al guardar el reporte.', type: 'danger' });
             }
@@ -198,7 +205,9 @@ export const useTimeReportingLogic = (user) => {
 
     return {
         weekRangeText,
+        mesReferenciaTexto,
         weekHeaders,
+        diasMesActual,
         projects: proyectos,
         message,
         metaHoras,

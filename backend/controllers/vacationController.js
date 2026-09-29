@@ -46,7 +46,7 @@ exports.obtenerPendientesLider = (req, res) => {
     });
 };
 
-// Crear una nueva solicitud de vacaciones (con autoincrement)
+// Crear una nueva solicitud de vacaciones (con validación de solapamiento)
 exports.solicitarVacaciones = (req, res) => {
     const {
         idUsuario,
@@ -69,6 +69,13 @@ exports.solicitarVacaciones = (req, res) => {
         });
     }
 
+    if (new Date(fInicio) > new Date(fFin)) {
+        return res.status(400).json({
+            success: false,
+            message: 'La fecha de inicio no puede ser mayor a la fecha de fin.'
+        });
+    }
+
     const cantidadDias = calcularDiasHabilesColombia(fInicio, fFin);
     console.log(`Cálculo backend: ${cantidadDias} días hábiles entre ${fInicio} y ${fFin}`);
 
@@ -79,42 +86,68 @@ exports.solicitarVacaciones = (req, res) => {
         });
     }
 
-    // Verificar días disponibles del usuario
-    const disponibilidadQuery = 'SELECT vacaciones_disponibles FROM usuario WHERE idUsuario = ?';
-    db.query(disponibilidadQuery, [idUsuario], (err, results) => {
-        if (err || results.length === 0) {
-            return res.status(500).json({ success: false, message: 'Error al verificar días disponibles.' });
+    // Verificar solapamiento con solicitudes existentes (Pendiente o Aprobado)
+    const overlapQuery = `
+        SELECT idSolicitud, Fecha_Inicio, Fecha_Fin, Estado
+        FROM solicitud_vacaciones
+        WHERE idUsuarioSV = ?
+          AND Estado IN ('Pendiente', 'Aprobado')
+          AND Fecha_Inicio <= ?
+          AND Fecha_Fin >= ?
+    `;
+    db.query(overlapQuery, [idUsuario, fFin, fInicio], (ovErr, ovResults) => {
+        if (ovErr) {
+            console.error('Error al verificar solapamiento:', ovErr);
+            return res.status(500).json({ success: false, message: 'Error al verificar solicitudes existentes.' });
         }
-        const disponibles = results[0].vacaciones_disponibles;
-        if (disponibles < cantidadDias) {
+
+        if (ovResults.length > 0) {
+            const sol = ovResults[0];
+            const f1 = String(sol.Fecha_Inicio).substring(0, 10);
+            const f2 = String(sol.Fecha_Fin).substring(0, 10);
             return res.status(400).json({
                 success: false,
-                message: `No tienes suficientes días disponibles. Tienes ${disponibles} y solicitas ${cantidadDias}.`
+                message: `Ya tienes una solicitud ${sol.Estado.toLowerCase()} en el rango ${f1} a ${f2}. No puedes crear otra que se solape.`
             });
         }
 
-        // Insertar sin especificar idSolicitud (auto-increment)
-        const insertQuery = `
-            INSERT INTO solicitud_vacaciones
-            (idUsuarioSV, Fecha_Inicio, Fecha_Fin, cantidadDias, Estado, Fecha_Solicitud, idAprobador, comentarios)
-            VALUES (?, ?, ?, ?, 'Pendiente', ?, ?, ?)
-        `;
-        db.query(insertQuery, [idUsuario, fInicio, fFin, cantidadDias, fechaSolicitud, idAprobador, comentarios], (insErr, result) => {
-            if (insErr) {
-                console.error("Error SQL en inserción:", insErr);
-                return res.status(500).json({ success: false, message: 'Error al registrar la solicitud.' });
+        // Verificar días disponibles del usuario
+        const disponibilidadQuery = 'SELECT vacaciones_disponibles FROM usuario WHERE idUsuario = ?';
+        db.query(disponibilidadQuery, [idUsuario], (err, results) => {
+            if (err || results.length === 0) {
+                return res.status(500).json({ success: false, message: 'Error al verificar días disponibles.' });
             }
-            res.json({
-                success: true,
-                message: `Solicitud creada con éxito (${cantidadDias} días hábiles) y enviada a tu líder.`,
-                solicitud: {
-                    idSolicitud: result.insertId,
-                    Fecha_Inicio: fInicio,
-                    Fecha_Fin: fFin,
-                    cantidadDias,
-                    Estado: 'Pendiente',
-                    comentarios
+            const disponibles = results[0].vacaciones_disponibles;
+            if (disponibles < cantidadDias) {
+                return res.status(400).json({
+                    success: false,
+                    message: `No tienes suficientes días disponibles. Tienes ${disponibles} y solicitas ${cantidadDias}.`
+                });
+            }
+
+            // Insertar sin especificar idSolicitud (auto-increment)
+            const insertQuery = `
+                INSERT INTO solicitud_vacaciones
+                (idUsuarioSV, Fecha_Inicio, Fecha_Fin, cantidadDias, Estado, Fecha_Solicitud, idAprobador, comentarios)
+                VALUES (?, ?, ?, ?, 'Pendiente', ?, ?, ?)
+            `;
+            db.query(insertQuery, [idUsuario, fInicio, fFin, cantidadDias, fechaSolicitud, idAprobador, comentarios], (insErr, result) => {
+                if (insErr) {
+                    console.error("Error SQL en inserción:", insErr);
+                    return res.status(500).json({ success: false, message: 'Error al registrar la solicitud.' });
                 }
+                res.json({
+                    success: true,
+                    message: `Solicitud creada con éxito (${cantidadDias} días hábiles) y enviada a tu líder.`,
+                    solicitud: {
+                        idSolicitud: result.insertId,
+                        Fecha_Inicio: fInicio,
+                        Fecha_Fin: fFin,
+                        cantidadDias,
+                        Estado: 'Pendiente',
+                        comentarios
+                    }
+                });
             });
         });
     });

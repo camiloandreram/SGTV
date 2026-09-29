@@ -14,7 +14,8 @@ const EditUser = () => {
     setShowConfirmPassword,
     handleInputChange,
     handleUpdate,
-    handleInactivar
+    handleInactivar,
+    handleActivar
   } = useEditUserLogic();
 
   return (
@@ -123,17 +124,37 @@ const EditUser = () => {
           <input type="text" name="direccion" value={formData.direccion} onChange={handleInputChange} required className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
+        {/* Botones de acción */}
         <div className="flex flex-wrap justify-between items-center pt-4 border-t gap-4">
           <div>
-            {formData.Estado === 'Activo' && (
-              <button type="button" onClick={handleInactivar} className="px-4 py-2 bg-red-100 text-red-700 font-medium rounded-md hover:bg-red-200 transition-colors">
+            {formData.Estado === 'Activo' ? (
+              <button
+                type="button"
+                onClick={handleInactivar}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 font-medium rounded-md hover:bg-orange-200 transition-colors"
+              >
+                <i className="fa-solid fa-user-slash"></i>
                 Inactivar Colaborador
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleActivar}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 font-medium rounded-md hover:bg-green-200 transition-colors"
+              >
+                <i className="fa-solid fa-user-check"></i>
+                Reactivar Colaborador
               </button>
             )}
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50">
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              <i className="fa-solid fa-floppy-disk"></i>
               {loading ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>

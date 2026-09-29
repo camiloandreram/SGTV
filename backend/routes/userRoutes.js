@@ -8,6 +8,7 @@ const {
   createUsuario,
   updateUsuario,
   inactivarUsuario,
+  activarUsuario,
   deleteUsuario,
   getPerfiles,
   getDepartamentos
@@ -70,6 +71,7 @@ router.put(
 
 // Inactivar usuario (baja lógica)
 router.patch('/:id/inactivar', auth, inactivarUsuario);
+router.patch('/:id/activar', auth, activarUsuario);
 
 // Eliminar físicamente un usuario
 router.delete('/:id', auth, deleteUsuario);

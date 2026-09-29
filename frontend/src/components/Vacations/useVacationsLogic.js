@@ -1,6 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiService } from '../../services/api';
 import { calcularDiasHabilesColombia } from '../../utils/holidays';
+
+// Helpers de fecha
+const toLocalISO = (str) => String(str).substring(0, 10);
+const fmtFecha = (str) => {
+  const s = toLocalISO(str);
+  const [y, m, d] = s.split('-');
+  return `${d}/${m}/${y}`;
+};
 
 export const useVacationsLogic = (user, refreshUser) => {
   const [startDate, setStartDate] = useState('');
@@ -11,6 +19,7 @@ export const useVacationsLogic = (user, refreshUser) => {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
   const [calculatedDays, setCalculatedDays] = useState(0);
+  const [conflicto, setConflicto] = useState(null);
 
   // Cálculo de días hábiles en frontend (solo estimación)
   useEffect(() => {
@@ -21,6 +30,29 @@ export const useVacationsLogic = (user, refreshUser) => {
     const dias = calcularDiasHabilesColombia(startDate, endDate);
     setCalculatedDays(dias);
   }, [startDate, endDate]);
+
+  // Detectar solapamiento con solicitudes existentes (Pendiente o Aprobado)
+  useEffect(() => {
+    if (!startDate || !endDate) {
+      setConflicto(null);
+      return;
+    }
+    const iniNuevo = new Date(startDate + 'T00:00:00');
+    const finNuevo = new Date(endDate + 'T00:00:00');
+    if (isNaN(iniNuevo.getTime()) || isNaN(finNuevo.getTime())) {
+      setConflicto(null);
+      return;
+    }
+
+    const encontrada = misSolicitudes.find(sol => {
+      if (sol.Estado === 'Rechazado') return false;
+      const ini = new Date(toLocalISO(sol.Fecha_Inicio) + 'T00:00:00');
+      const fin = new Date(toLocalISO(sol.Fecha_Fin) + 'T00:00:00');
+      return iniNuevo <= fin && ini <= finNuevo;
+    });
+
+    setConflicto(encontrada || null);
+  }, [startDate, endDate, misSolicitudes]);
 
   const cargarMisSolicitudes = useCallback(async () => {
     if (!user?.idUsuario) return;
@@ -54,6 +86,7 @@ export const useVacationsLogic = (user, refreshUser) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ text: '', type: '' });
+
     if (!startDate || !endDate) {
       setMessage({ text: 'Por favor, selecciona ambas fechas.', type: 'danger' });
       return;
@@ -66,6 +99,14 @@ export const useVacationsLogic = (user, refreshUser) => {
       setMessage({ text: 'El rango seleccionado solo contiene días no hábiles.', type: 'danger' });
       return;
     }
+    if (conflicto) {
+      setMessage({
+        text: `Ya tienes una solicitud ${conflicto.Estado.toLowerCase()} en el rango ${fmtFecha(conflicto.Fecha_Inicio)} a ${fmtFecha(conflicto.Fecha_Fin)}. Elige otras fechas.`,
+        type: 'danger'
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await apiService.solicitarVacaciones({
@@ -80,6 +121,7 @@ export const useVacationsLogic = (user, refreshUser) => {
         setStartDate('');
         setEndDate('');
         setComments('');
+        setConflicto(null);
         cargarMisSolicitudes();
         refreshUser();
       } else {
@@ -118,6 +160,7 @@ export const useVacationsLogic = (user, refreshUser) => {
     message,
     loading,
     calculatedDays,
+    conflicto,
     handleSubmit,
     handleProcesarSolicitud
   };

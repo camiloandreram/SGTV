@@ -134,6 +134,20 @@ export const useEditUserLogic = () => {
       setMessage({ text: 'No se pudo desactivar el usuario.', type: 'danger' });
     }
   };
+  const handleActivar = async () => {
+  if (!window.confirm("¿Seguro que deseas reactivar a este empleado? Recuperará su acceso al sistema.")) return;
+  try {
+    const response = await apiService.activarUsuario(id);
+    if (response.success) {
+      setMessage({ text: 'El empleado ha sido reactivado con éxito.', type: 'success' });
+      setFormData(prev => ({ ...prev, Estado: 'Activo' }));
+    } else {
+      setMessage({ text: response.message || 'Error al activar.', type: 'danger' });
+    }
+  } catch (err) {
+    setMessage({ text: 'No se pudo activar el usuario.', type: 'danger' });
+  }
+};
 
   return {
     formData,
@@ -147,6 +161,7 @@ export const useEditUserLogic = () => {
     setShowConfirmPassword,
     handleInputChange,
     handleUpdate,
-    handleInactivar
+    handleInactivar,
+    handleActivar
   };
 };

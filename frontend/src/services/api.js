@@ -135,6 +135,17 @@ export const apiService = {
       return { success: false, message: 'Error de conexión al inactivar' };
     }
   },
+  activarUsuario: async (id) => {
+    try {
+      const response = await api.patch(`/usuarios/${id}/activar`);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        return { success: false, message: error.response.data?.message || 'Error al activar' };
+      }
+      return { success: false, message: 'Error de conexión al activar' };
+    }
+  },
   eliminarUsuarioFisico: async (id) => {
     try {
       const response = await api.delete(`/usuarios/${id}`);
@@ -188,18 +199,18 @@ export const apiService = {
   },
 
   // Reporte de horas
-  obtenerHorasSemanales: async (idUsuario, fechaInicioSemana) => {
-    try {
-      const response = await api.get('/reporte-horas', {
-        params: { idUsuario, fechaInicioSemana }
-      });
-      return response.data;
-    } catch (error) {
-      if (error.response) {
-        return { success: false, message: error.response.data?.message || 'Error al obtener horas' };
-      }
-      return { success: false, message: 'Error de conexión' };
+  obtenerHorasSemanales: async (idUsuario, fechaInicioSemana, mesReferencia) => {
+  try {
+    const response = await api.get('/reporte-horas', {
+      params: { idUsuario, fechaInicioSemana, mesReferencia }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      return { success: false, message: error.response.data?.message || 'Error al obtener horas' };
     }
+    return { success: false, message: 'Error de conexión' };
+  }
   },
   guardarReporteHoras: async (datos) => {
     try {

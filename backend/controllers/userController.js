@@ -330,6 +330,18 @@ const inactivarUsuario = (req, res) => {
     });
   });
 };
+// Activar usuario (solo admins/jefes)
+const activarUsuario = (req, res) => {
+  verificarPermisos(req, res, () => {
+    const idUsuario = req.params.id;
+    const sqlActivar = 'UPDATE `Usuario` SET `Estado` = \'Activo\' WHERE `idUsuario` = ?';
+    db.query(sqlActivar, [idUsuario], (err, result) => {
+      if (err) return res.status(500).json({ success: false, message: 'Error al activar.' });
+      if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+      return res.json({ success: true, message: 'El empleado ha sido activado con éxito.' });
+    });
+  });
+};
 
 // Eliminar usuario (solo admins/jefes)
 const deleteUsuario = (req, res) => {
@@ -397,6 +409,7 @@ module.exports = {
   createUsuario,
   updateUsuario,
   inactivarUsuario,
+  activarUsuario,
   deleteUsuario,
   getUsuarioById,
   getPerfiles,
