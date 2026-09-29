@@ -9,8 +9,7 @@ const connection = mysql.createConnection({
   database: process.env.DB_NAME,
   dateStrings: true,
   ssl: {
-    rejectUnauthorized: false  // ⬅️ CLAVE: sin esto, Aiven rechaza la conexión
-  }
+    rejectUnauthorized: false 
 });
 
 connection.connect((err) => {
