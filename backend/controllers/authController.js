@@ -2,22 +2,18 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const util = require('util');
 require('dotenv').config();
 
 const queryPromise = util.promisify(db.query).bind(db);
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT),
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Inicializar cliente de Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ============================================================
+// LOGIN
+// ============================================================
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -62,7 +58,9 @@ const login = async (req, res) => {
   }
 };
 
-// Solicitar restablecimiento de contraseña
+// ============================================================
+// SOLICITAR RESTABLECIMIENTO DE CONTRASEÑA
+// ============================================================
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -77,7 +75,6 @@ const forgotPassword = async (req, res) => {
     const users = await queryPromise(checkUserQuery, [email]);
 
     if (users.length === 0) {
-      // Por seguridad, no revelamos si el email existe
       return res.status(200).json({
         success: true,
         message: 'Si el correo existe, recibirás un enlace para restablecer tu contraseña.'
@@ -101,22 +98,44 @@ const forgotPassword = async (req, res) => {
     // Construir enlace de restablecimiento
     const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/reset-password?token=${resetToken}`;
 
-    // Enviar correo
-    const mailOptions = {
-      from: process.env.EMAIL_FROM,
+    // Enviar correo con Resend
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
       to: email,
       subject: 'Restablecimiento de contraseña - SGTV',
       html: `
-        <h2>Hola, ${user.Nombre || 'usuario'}</h2>
-        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
-        <a href="${resetLink}" target="_blank">${resetLink}</a>
-        <p>Este enlace expirará en 1 hora.</p>
-        <p>Si no solicitaste este cambio, ignora este mensaje.</p>
-        <p>Saludos,<br>Equipo SGTV</p>
-      `,
-    };
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #C62828;">Hola, ${user.Nombre || 'usuario'}</h2>
+          <p>Has solicitado restablecer tu contraseña en SGTV.</p>
+          <p>Haz clic en el siguiente botón para continuar:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetLink}" 
+               style="background-color: #C62828; color: white; padding: 14px 28px; 
+                      text-decoration: none; border-radius: 8px; font-weight: bold;
+                      display: inline-block;">
+              Restablecer Contraseña
+            </a>
+          </div>
+          <p>O copia y pega este enlace en tu navegador:</p>
+          <p style="background: #f5f5f5; padding: 10px; border-radius: 6px; word-break: break-all; font-size: 12px;">
+            ${resetLink}
+          </p>
+          <p style="color: #666; font-size: 12px;">Este enlace expirará en 1 hora.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="color: #999; font-size: 11px;">
+            Si no solicitaste este cambio, ignora este mensaje.<br>
+            Saludos,<br>Equipo SGTV
+          </p>
+        </div>
+      `
+    });
 
-    await transporter.sendMail(mailOptions);
+    if (error) {
+      console.error('❌ Error de Resend:', error);
+      throw new Error(error.message || 'Error al enviar el correo');
+    }
+
+    console.log('✅ Correo enviado con Resend. ID:', data?.id);
 
     res.status(200).json({
       success: true,
@@ -136,7 +155,9 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// Restablecer contraseña (con token)
+// ============================================================
+// RESTABLECER CONTRASEÑA (con token)
+// ============================================================
 const resetPassword = async (req, res) => {
   const { token, nuevaContraseña, confirmarContraseña } = req.body;
 
